@@ -2,7 +2,7 @@ import httpx
 import streamlit as st
 from typing import Optional, Dict, List
 
-API_BASE_URL = "http://localhost:9000/api/orders"  # adjust if deployed
+API_BASE_URL = "http://localhost:9000"  # adjust if deployed
 
 class OrderClient:
     def __init__(self):
