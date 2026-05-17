@@ -1,20 +1,28 @@
 # components/navbar.py
 import streamlit as st
+from streamlit_option_menu import option_menu
 
-def navbar():
-    st.markdown(
-        """
-        <style>
-        .navbar {background-color:#2C3E50; padding:10px;}
-        .navbar a {color:white; margin:0 15px; text-decoration:none;}
-        </style>
-        <div class="navbar">
-            <a href="/">Home</a>
-            <a href="/Catalog_Books">Books</a>
-            <a href="/Catalog_Uniforms">Uniforms</a>
-            <a href="/Orders">Orders</a>
-            <a href="/Payments">Payments</a>
-        </div>
-        """,
-        unsafe_allow_html=True
-    )
+def Navbar():
+    hide_default_menu = """
+    <style>
+    [data-testid="stSidebarNav"] {display: none;}
+    </style>
+    """
+    st.markdown(hide_default_menu, unsafe_allow_html=True)
+
+    with st.sidebar:
+        selected = option_menu(
+            menu_title=None,
+            options=[
+                "Home", "Book Page", "Uniform Page",
+                "Checkout Page", "Order Status Page",
+                "Order History", "Account"
+            ],
+            icons=[
+                "house", "book", "person-badge",
+                "bag-check", "list", "clock-history", "person"
+            ],
+            menu_icon="cast",
+            default_index=0,
+        )
+    return selected

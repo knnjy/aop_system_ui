@@ -16,3 +16,6 @@ python-jose==3.3.0
 
 # Utilities
 pillow==10.3.0   # image handling if needed
+
+# For the navbar component
+streamlit-options-menu==0.1.0
