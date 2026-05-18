@@ -14,24 +14,36 @@ class OrderClient:
             return {}
         return {"Authorization": f"Bearer {token}"}
 
-    def list_orders(self) -> List[Dict]:
-        """
-        Fetch all orders from backend
-        IMPORTANT: backend should return LIST of dicts
-        """
-        try:
-            response = self.client.get("/", headers=self._get_headers())
+    def add_order(self, order_data: dict) -> Optional[Dict]:
+        """User: Place new order"""
+        response = self.client.post("/add-order", json=order_data, headers=self._get_headers())
+        if response.status_code == 201:
+            return response.json()
+        st.error("Failed to add order")
+        return None
 
-            if response.status_code == 200:
-                data = response.json()
+    def list_orders(self) -> Optional[List[Dict]]:
+        """Admin: View all orders"""
+        response = self.client.get("/list-orders", headers=self._get_headers())
+        if response.status_code == 200:
+            return response.json()
+        st.error("Failed to fetch orders")
+        return None
 
-                # safety check
-                if isinstance(data, list):
-                    return data
-                return []
+    def get_order(self, request_id: str) -> Optional[Dict]:
+        """User/Admin: View order details"""
+        response = self.client.get(f"/get-order/{request_id}", headers=self._get_headers())
+        if response.status_code == 200:
+            return response.json()
+        st.error("Order not found")
+        return None
 
-            return []
+    def update_order(self, request_id: str, update_data: dict) -> bool:
+        """Admin: Approve/Reject order"""
+        response = self.client.put(f"/update-order/{request_id}", json=update_data, headers=self._get_headers())
+        return response.status_code == 200
 
-        except Exception as e:
-            st.error(f"API error: {e}")
-            return []
+    def cancel_order(self, request_id: str) -> bool:
+        """User: Cancel own order"""
+        response = self.client.delete(f"/{request_id}", headers=self._get_headers())
+        return response.status_code == 200
