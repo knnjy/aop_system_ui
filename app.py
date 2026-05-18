@@ -1,12 +1,11 @@
 # app.py
 import streamlit as st
-from aop_system_ui.components.navbar import Navbar
-from aop_system_ui.pages import Home, Book_page, Uniform_page, Checkout_page, Order_status_page, Order_history, Account
-import sys, os
-sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+from components.navbar import navbar
+from pages import Home, Book_page, Uniform_page, Checkout_page, Order_Status, Order_history, Account
 
 
-selected = Navbar()
+
+selected = navbar()
 
 if selected == "Home":
     Home.show()
@@ -17,7 +16,7 @@ elif selected == "Uniform Page":
 elif selected == "Checkout Page":
     Checkout_page.show()
 elif selected == "Order Status Page":
-    Order_status_page.show()
+    Order_Status.show()
 elif selected == "Order History":
     Order_history.show()
 elif selected == "Account":

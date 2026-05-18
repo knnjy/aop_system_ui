@@ -2,7 +2,7 @@
 import streamlit as st
 from streamlit_option_menu import option_menu
 
-def Navbar():
+def navbar():
     hide_default_menu = """
     <style>
     [data-testid="stSidebarNav"] {display: none;}
