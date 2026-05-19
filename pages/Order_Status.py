@@ -15,9 +15,6 @@ st.markdown(
 # =========================
 orders = order_client.list_orders()
 
-""""Sample List Order Output """
-st.write(orders) 
-
 if not orders:
     st.warning("No orders found.")
     st.stop()
