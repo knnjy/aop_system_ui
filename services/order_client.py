@@ -2,14 +2,14 @@ import httpx
 import streamlit as st
 from typing import Optional, Dict, List
 
-API_BASE_URL = "http://localhost:9000/api/orders"
+API_BASE_URL = "http://localhost:9000/api/orders"  # adjust if deployed
 
 class OrderClient:
     def __init__(self):
         self.client = httpx.Client(base_url=API_BASE_URL)
 
     def _get_headers(self) -> dict:
-        token = st.session_state.get("token")
+        token = st.session_state.get("access_token")
         if not token:
             return {}
         return {"Authorization": f"Bearer {token}"}
@@ -24,7 +24,7 @@ class OrderClient:
 
     def list_orders(self) -> Optional[List[Dict]]:
         """Admin: View all orders"""
-        response = self.client.get("/list-order", headers=self._get_headers())
+        response = self.client.get("/list-orders", headers=self._get_headers())
         if response.status_code == 200:
             return response.json()
         st.error("Failed to fetch orders")
@@ -45,5 +45,5 @@ class OrderClient:
 
     def cancel_order(self, request_id: str) -> bool:
         """User: Cancel own order"""
-        response = self.client.delete(f"/{request_id}", headers=self._get_headers())
+        response = self.client.delete(f"/cancel-order/{request_id}", headers=self._get_headers())
         return response.status_code == 200
