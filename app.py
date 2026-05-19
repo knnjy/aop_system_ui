@@ -1,23 +1,54 @@
-# app.py
 import streamlit as st
+
+# IMPORT PAGES DIRECTLY (NO PACKAGE PREFIX)
 from components.navbar import navbar
-from pages import Home, Book_page, Uniform_page, Checkout_page, Order_Status, Order_history, Account
 
+from pages import (
+    Home,
+    Book_page,
+    Uniform_page,
+    Checkout_page,
+    Order_Status,
+    Order_history,
+    Account
+)
 
+st.set_page_config(page_title="AOP System", layout="wide")
 
-selected = navbar()
+# NAVBAR
+navbar()
 
-if selected == "Home":
+# SIMPLE PAGE NAVIGATION (STREAMLIT STYLE)
+page = st.sidebar.selectbox(
+    "Navigate",
+    [
+        "Home",
+        "Book Page",
+        "Uniform Page",
+        "Checkout Page",
+        "Order Status Page",
+        "Order History",
+        "Account"
+    ]
+)
+
+if page == "Home":
     Home.show()
-elif selected == "Book Page":
+
+elif page == "Book Page":
     Book_page.show()
-elif selected == "Uniform Page":
+
+elif page == "Uniform Page":
     Uniform_page.show()
-elif selected == "Checkout Page":
+
+elif page == "Checkout Page":
     Checkout_page.show()
-elif selected == "Order Status Page":
+
+elif page == "Order Status Page":
     Order_Status.show()
-elif selected == "Order History":
+
+elif page == "Order History":
     Order_history.show()
-elif selected == "Account":
+
+elif page == "Account":
     Account.show()

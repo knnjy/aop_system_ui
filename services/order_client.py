@@ -2,7 +2,7 @@ import httpx
 import streamlit as st
 from typing import Optional, Dict, List
 
-API_BASE_URL = "http://localhost:9000"  # adjust if deployed
+API_BASE_URL = "http://localhost:9000/api/orders"
 
 class OrderClient:
     def __init__(self):
@@ -24,7 +24,7 @@ class OrderClient:
 
     def list_orders(self) -> Optional[List[Dict]]:
         """Admin: View all orders"""
-        response = self.client.get("/list-order", headers=self._get_headers())
+        response = self.client.get("/list-orders", headers=self._get_headers())
         if response.status_code == 200:
             return response.json()
         st.error("Failed to fetch orders")
