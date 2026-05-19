@@ -24,7 +24,7 @@ class OrderClient:
 
     def list_orders(self) -> Optional[List[Dict]]:
         """Admin: View all orders"""
-        response = self.client.get("/list-orders", headers=self._get_headers())
+        response = self.client.get("/list-order", headers=self._get_headers())
         if response.status_code == 200:
             return response.json()
         st.error("Failed to fetch orders")
