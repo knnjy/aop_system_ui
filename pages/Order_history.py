@@ -113,4 +113,9 @@ def show():
     stat_card(c3, "Claimed",      claimed,   "#1d4ed8")
     stat_card(c4, "Cancelled",    cancelled, "#64748b")
 
+    st.markdown("<br>", unsafe_allow_html=True)
+    if st.button("← Back to Order Status", key="back_to_order_status"):
+        st.session_state["page"] = "Order Status Page"
+        st.rerun()
+
 show()

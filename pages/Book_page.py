@@ -10,10 +10,10 @@ def show():
     book_client = BookClient()
 
     # Sidebar filters
-    search_query = st.sidebar.text_input("Search books...")
-    category = st.sidebar.selectbox("Category", ["All", "ICS", "CEA", "CAS", "CBEA"])
-    price_range = st.sidebar.selectbox("Price Range", ["All", "₱0-₱300", "₱301-₱600", "₱601+"])
-    availability_filter = st.sidebar.selectbox("Availability", ["All", "Available", "Unavailable"])
+    search_query = st.sidebar.text_input("Search books...", key="book_search")
+    category = st.sidebar.selectbox("Category", ["All", "ICS", "CEA", "CAS", "CBEA"], key="book_category")
+    price_range = st.sidebar.selectbox("Price Range", ["All", "₱0-₱300", "₱301-₱600", "₱601+"], key="book_price_range")
+    availability_filter = st.sidebar.selectbox("Availability", ["All", "Available", "Unavailable"], key="book_availability")
 
     # Get books from backend
     books = book_client.list_books() or []
@@ -59,4 +59,5 @@ def show():
         st.warning("No books found.")
 
 
-show()
+if __name__ == "__main__":
+    show()
