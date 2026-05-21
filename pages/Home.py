@@ -4,7 +4,6 @@ from services.order_client import OrderClient
 
 
 def show():
-
     st.set_page_config(page_title="AOP System - Home",page_icon="house.svg", layout="wide")
     # Inject custom CSS
     st.markdown(
@@ -37,9 +36,9 @@ def show():
     order_client = OrderClient()
 
 
+    # Initialize cart once
     if "cart" not in st.session_state:
         st.session_state["cart"] = []
-
 
     # Outer layout: two main columns
     page_col1, page_col2 = st.columns([3,2])
@@ -55,32 +54,26 @@ def show():
         )
 
         books = book_client.list_books()  # API call
+
         if books:
             for book in books:
-                # Two columns: left for title+price, right for button
                 book_col1, book_col2 = st.columns([4,2])
 
                 with book_col1:
-                    # Title
                     st.markdown(
-                        f"<span style='color:#1e3a8a; font-weight:bold'>{book['Title']}</span>",
+                        f"<span style='color:#1e3a8a; font-weight:bold'>{book['title']}</span>",
                         unsafe_allow_html=True
                     )
-                    # Price below title
                     st.markdown(
-                        f"<span style='color:#1e3a8a'>₱{book['Price']}</span>",
+                        f"<span style='color:#1e3a8a'>₱{book['price']}</span>",
                         unsafe_allow_html=True
                     )
 
                 with book_col2:
-                    # Force button to the far right
-                    st.markdown("<div style='text-align:right'>", unsafe_allow_html=True)
                     if st.button("Add to cart", icon=":material/add_shopping_cart:", key=f"add_{book['book_id']}"):
                         st.session_state["cart"].append(book)
-                        st.success(f"Added {book['Title']} to cart")
-                    st.markdown("</div>", unsafe_allow_html=True)
+                        st.success(f"Added {book['title']} to cart")
 
-                # Divider between items
                 st.markdown(
                     "<hr style='border:1px solid #1e3a8a; margin:10px 0;'>",
                     unsafe_allow_html=True
@@ -90,9 +83,9 @@ def show():
 
 
 
-
-
     with page_col2:
+        st.write(order_client, books)
+
         st.markdown(
             """
             <div style='border:1px solid #e2e8f0; background-color:white; padding:15px; border-radius:8px; margin-top:20px'>
@@ -101,3 +94,28 @@ def show():
             """,
             unsafe_allow_html=True
         )
+
+        if st.session_state["cart"]:
+            total_items = len(st.session_state["cart"])
+            total_price = sum(item["Price"] for item in st.session_state["cart"]) 
+
+            st.write(f"Total items: {total_items}")
+            st.write(f"Total price: ₱{total_price}")
+
+            # Check if all books are bought
+            if total_items == len(books):
+                st.success("All books have been bought!")
+
+            if st.button("Order All"):
+                order_data = {"items": st.session_state["cart"]}
+                result = order_client.add_order(order_data)
+                if result:
+                    st.success("Order placed successfully!")
+                    st.session_state["cart"].clear()
+                else:
+                    st.error("Failed to place order.")
+        else:
+            st.info("Your cart is empty.")
+
+
+
