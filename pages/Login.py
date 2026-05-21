@@ -12,12 +12,7 @@ st.markdown("""
         [data-testid="stSidebar"] {display: none !important;}
         [data-testid="collapsedControl"] {display: none !important;}
         #MainMenu, footer, header {visibility: hidden;}
-
-        /* Background - full screen */
-        .stApp {
-            background-color: #e8eaf2;
-        }
-
+        
         /* Remove ALL default padding */
         .block-container {
             padding: 0 !important;
@@ -27,17 +22,15 @@ st.markdown("""
         /* Labels */
         .stTextInput label {
             font-weight: 600 !important;
-            color: #333 !important;
             font-size: 14px !important;
         }
 
         /* Input fields */
         .stTextInput > div > div > input {
-            border-radius: 8px !important;
-            border: 1.5px solid #d0d5e8 !important;
+            border-radius: 10px !important;
+            border:1px solid #d5d9e5 !important;
             padding: 12px 14px !important;
             font-size: 15px !important;
-            background: #fff !important;
         }
 
         .stTextInput > div > div > input:focus {
@@ -100,7 +93,7 @@ def show_login():
     with col:
         # Title inside the card
         st.markdown(
-            "<h2 style='text-align:center; color:#1a237e; font-weight:800; font-family:Arial; margin-bottom:26px;'>Student Portal Login</h2>",
+            "<h2 style='text-align:center; color:#2d3a8c; font-weight:800; font-family:Arial; margin-bottom:26px;'>Student Portal Login</h2>",
             unsafe_allow_html=True
         )
 
