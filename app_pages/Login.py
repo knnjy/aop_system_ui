@@ -84,10 +84,12 @@ def show_login():
 
         if st.button("Login"):
             response = login_client.login(username, password)
+            print(response)
             if response:
                 st.session_state.logged_in = True
                 st.session_state.role = response.get("role")
                 st.session_state.username = username
+                st.session_state.user_data = response.get("user_data", {})
                 st.session_state.current_page = "homepage" 
                 st.success(f"Welcome, {username}!")
                 st.rerun()
