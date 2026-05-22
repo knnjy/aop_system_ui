@@ -41,7 +41,7 @@ def show():
         </style>
     """, unsafe_allow_html=True)
 
-    st.markdown("<div class='book-title'>NO TITLE Book Page</div>", unsafe_allow_html=True)
+    st.markdown("<div class='book-title'>RTU Book Page</div>", unsafe_allow_html=True)
 
     # --- Fetch Books ---
     try:
