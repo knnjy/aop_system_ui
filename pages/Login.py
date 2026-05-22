@@ -40,9 +40,8 @@ st.markdown("""
 
         /* Login button */
         .stButton > button {
-            background-color: #2d3a8c !important;
             color: white !important;
-            border: none !important;
+            border: 1px solid #3949b !important;
             border-radius: 8px !important;
             padding-align: center !important;
             width: 100% !important;
@@ -57,15 +56,6 @@ st.markdown("""
 
         .stButton > button:hover {
             background-color: #1a237e !important;
-        }
-
-        /* White card using column background */
-        [data-testid="column"]:nth-child(2) {
-            background-color: #ffffff !important;
-            border-radius: 20px !important;
-            box-shadow: 0 6px 30px rgba(0, 0, 0, 0.08) !important;
-            padding: 50px 40px 40px 40px !important;
-            margin-top: 80px !important;
         }
 
         /* Forgot password link */
@@ -91,17 +81,15 @@ def show_login():
     _, col, _ = st.columns([1.2, 1, 1.2])
 
     with col:
-        # Title inside the card
         st.markdown(
             "<h2 style='text-align:center; color:#2d3a8c; font-weight:800; font-family:Arial; margin-bottom:26px;'>Student Portal Login</h2>",
             unsafe_allow_html=True
         )
 
-        # Inputs inside the card
         username = st.text_input("Username", placeholder="")
         password = st.text_input("Password", type="password", placeholder="")
 
-        # Button inside the card
+        # Button
         if st.button("Login"):
             response = login_client.login(username, password)
             if response.get("success"):
@@ -114,7 +102,7 @@ def show_login():
             else:
                 st.error("Invalid username or password.")
 
-        # Forgot password inside the card
+        # Forgot password
         st.markdown(
             "<div class='forgot-link'><a href='#'>Forgot password?</a></div>",
             unsafe_allow_html=True
