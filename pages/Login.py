@@ -3,8 +3,6 @@ import streamlit as st
 from pages import Home
 from services.auth_client import AuthClient
 
-# Page config - MUST be first
-st.set_page_config(page_title="Student Portal Login", layout="wide", initial_sidebar_state="collapsed")
 login_client = AuthClient()
 st.markdown("""
     <style>
@@ -40,10 +38,6 @@ st.markdown("""
             background: #fff !important;
         }
 
-        .stTextInput > div > div > input:focus {
-            border-color: #3949ab !important;
-            box-shadow: 0 0 0 2px rgba(57,73,171,0.10) !important;
-        }
 
         /* Login button */
         .stButton > button {
@@ -98,30 +92,26 @@ def show_login():
     _, col, _ = st.columns([1.2, 1, 1.2])
 
     with col:
-        # Title inside the card
         st.markdown(
             "<h2 style='text-align:center; color:#1a237e; font-weight:800; font-family:Arial; margin-bottom:26px;'>Student Portal Login</h2>",
             unsafe_allow_html=True
         )
 
-        # Inputs inside the card
-        username = st.text_input("Username", placeholder="")
-        password = st.text_input("Password", type="password", placeholder="")
+        username = st.text_input("Username", placeholder="Enter your username")
+        password = st.text_input("Password", type="password", placeholder="Enter your password")
 
-        # Button inside the card
         if st.button("Login"):
             response = login_client.login(username, password)
-            if response.get("success"):
+            if response:
                 st.session_state.logged_in = True
                 st.session_state.role = response.get("role")
                 st.session_state.username = username
+                st.session_state.current_page = "homepage" 
+                st.switch_page("pages/Home.py")
                 st.success(f"Welcome, {username}!")
-                Home.show()
-
             else:
                 st.error("Invalid username or password.")
 
-        # Forgot password inside the card
         st.markdown(
             "<div class='forgot-link'><a href='#'>Forgot password?</a></div>",
             unsafe_allow_html=True

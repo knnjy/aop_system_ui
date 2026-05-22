@@ -4,7 +4,6 @@ from services.order_client import OrderClient
 
 
 def show():
-    st.set_page_config(page_title="AOP System - Home",page_icon="house.svg", layout="wide")
     # Inject custom CSS
     st.markdown(
         """
