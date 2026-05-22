@@ -41,7 +41,7 @@ def show():
         </style>
     """, unsafe_allow_html=True)
 
-    st.markdown("<div class='book-title'>📚 Book Page</div>", unsafe_allow_html=True)
+    st.markdown("<div class='book-title'>NO TITLE Book Page</div>", unsafe_allow_html=True)
 
     # --- Fetch Books ---
     try:
@@ -61,10 +61,10 @@ def show():
         st.markdown(f"<div class='book-title'>{book.get('title','Unknown')}</div>", unsafe_allow_html=True)
         st.markdown(f"""
             <div class='detail-box'>
-                💵 <b>Price:</b> ₱{book.get('price','0')} <br>
-                📦 <b>Stock:</b> {book.get('stock_quantity','0')} <br>
-                📝 <b>Program:</b> {book.get('program_related','')} <br>
-                🔖 <b>Availability:</b> {book.get('availability','')}
+                <b>Price:</b> ₱{book.get('price','0')} <br>
+                <b>Stock:</b> {book.get('stock_quantity','0')} <br>
+                <b>Program:</b> {book.get('program_related','')} <br>
+                <b>Availability:</b> {book.get('availability','')}
             </div>
         """, unsafe_allow_html=True)
 
