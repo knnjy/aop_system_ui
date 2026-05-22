@@ -68,11 +68,11 @@ def show():
     """, unsafe_allow_html=True)
     user = st.session_state.user_data
     # Demo data
-    first_name = user.get("Name", "Regie")
-    student_id, status, year_level, department = user.get("Student ID"), user.get("status", "Active Regular"), user.get("Year Level"), user.get("Program")
-    email, sex, address = user.get("Email"), user.get("Sex"), user.get("Block Section")
-    course = user.get("Course")
-    age = user.get("Age")
+    first_name = user.get("name")
+    student_id, status, year_level, department = user.get("student_id"), user.get("status", "Active Regular"), user.get("year_level"), user.get("program")
+    email, sex, address = user.get("email"), user.get("sex"), user.get("block_section")
+    course = user.get("course")
+    age = user.get("age")
 
     # Page title
     st.markdown("<h1>Account Info</h1>", unsafe_allow_html=True)
