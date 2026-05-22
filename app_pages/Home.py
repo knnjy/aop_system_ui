@@ -15,12 +15,17 @@ def show():
         """,
         unsafe_allow_html=True
     )
+    username = st.session_state.get("username", "Student")
+    if "username" not in st.session_state:
+        st.session_state["username"] = "kenny"   # fallback for demo
+
+    username = st.session_state.get("username", "Student")
 
     st.markdown(
-        """
+        f"""
         <div style='border:2px solid #6e6e6e; background-color:#f9f9f9; padding:20px; border-radius:8px'>
             <span style='color:#1e3a8a; font-weight:bold; font-size:35px'>
-                Welcome back, Student! 
+                Welcome back, {username}!
             </span>
             <span style='color:#676767; font-size:16px; display:block; margin-top:1px'>
                 Required materials this semester.
@@ -82,8 +87,7 @@ def show():
 
 
 
-    with page_col2:
-        st.write(order_client, books)
+    with page_col2: 
 
         st.markdown(
             """
@@ -96,7 +100,7 @@ def show():
 
         if st.session_state["cart"]:
             total_items = len(st.session_state["cart"])
-            total_price = sum(item["Price"] for item in st.session_state["cart"]) 
+            total_price = sum(item["price"] for item in st.session_state["cart"]) 
 
             st.write(f"Total items: {total_items}")
             st.write(f"Total price: ₱{total_price}")
@@ -115,6 +119,5 @@ def show():
                     st.error("Failed to place order.")
         else:
             st.info("Your cart is empty.")
-
 
 

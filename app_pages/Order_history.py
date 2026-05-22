@@ -39,9 +39,18 @@ def show():
 
     col_search, col_filter = st.columns([3, 1])
     with col_search:
-        search_query = st.text_input("", placeholder="🔍 Search by Order ID or User ID...")
+        search_query = st.text_input(
+            "Search Orders",  # non-empty label
+            placeholder="🔍 Search by Order ID or User ID...",
+            label_visibility="collapsed"  # hides the label but keeps accessibility
+        )
+
     with col_filter:
-        status_filter = st.selectbox("", ["All Statuses", "approved", "approve", "pending", "claimed", "cancelled"])
+        status_filter = st.selectbox(
+            "Filter Status",  # non-empty label
+            ["All Statuses", "approved", "pending", "claimed", "cancelled"],
+            label_visibility="collapsed"  # hides the label visually
+        )
 
     filtered = [o for o in orders if isinstance(o, dict)]
 
@@ -118,4 +127,3 @@ def show():
         st.session_state["page"] = "Order Status Page"
         st.rerun()
 
-show()

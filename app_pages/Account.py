@@ -1,7 +1,6 @@
 import streamlit as st
 
 def show():
-    st.set_page_config(page_title="AOP System - Account", page_icon="👤", layout="wide")
     # Inject custom CSS
     st.markdown(
         """

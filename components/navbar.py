@@ -14,15 +14,15 @@ def navbar():
         selected = option_menu(
             menu_title=None,
             options=[
-                "Home", "Book Page", "Uniform Page",
-                "Checkout Page", "Order Status Page",
+                "Home", "Books", "Uniforms",
+                "Checkout Page", "Order Status",
                 "Order History", "Account"
             ],
             icons=[
                 "house", "book", "person-badge",
                 "bag-check", "list", "clock-history", "person"
             ],
-            menu_icon="cast",
+            menu_icon="list",
             default_index=0,
         )
     return selected
