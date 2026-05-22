@@ -53,7 +53,6 @@ def _normalize_year(year_value):
 
 
 def show():
-    st.set_page_config(layout="wide")
 
     st.markdown(
         """
