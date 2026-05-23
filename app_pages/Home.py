@@ -156,6 +156,7 @@ def show():
 
     student_name = student_data.get("name") or student_data.get("student_name") or student_data.get("full_name") or st.session_state.get("username", "Student")
     year_level = student_data.get("year_level") or student_data.get("year") or student_data.get("grade_level") or student_data.get("semester")
+    program = student_data.get("program")
     normalized_year = _normalize_year(year_level)
 
     st.markdown(
@@ -173,7 +174,7 @@ def show():
 
     book_client = BookClient()
     if isinstance(normalized_year, int):
-        books = book_client.filter_books(semester_available=normalized_year) or []
+        books = book_client.filter_books(semester_available=normalized_year, program_related=program) or []
     else:
         books = []
 

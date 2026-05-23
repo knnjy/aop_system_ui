@@ -2,7 +2,7 @@ from app_pages import Account, Book_page, Checkout_page, Home, Login, Order_Stat
 import streamlit as st
 from components.navbar import navbar
 
-
+st.set_page_config(layout="wide")
 
 # Initialize session state
 if 'logged_in' not in st.session_state:
