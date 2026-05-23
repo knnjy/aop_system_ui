@@ -44,15 +44,33 @@ def _normalize_year(year_value):
     if year_value is None:
         return None
     try:
-        # Extract digits from strings like "2nd year" or "Semester 1"
         digits = ''.join(ch for ch in str(year_value) if ch.isdigit())
         return int(digits) if digits else None
     except (ValueError, TypeError):
         return None
 
 
-
 def show():
+    auth_client = AuthClient()
+    student_data = st.session_state.get("user_data") or {}
+    if not student_data:
+        student_data = auth_client.get_profile() or {}
+        if student_data:
+            st.session_state["user_data"] = student_data
+
+    student_name = (
+        student_data.get("name")
+        or student_data.get("student_name")
+        or student_data.get("full_name")
+        or st.session_state.get("username", "Student")
+    )
+
+    # Extract enrolled subjects from session (e.g., "ITP220, ITP221, PE04")
+    enrolled_subjects_str = student_data.get("current_enrolled_subjects", "") or ""
+    enrolled_subjects = [s.strip() for s in enrolled_subjects_str.split(",") if s.strip()]
+
+    # Extract year level string (no normalization, just display as-is)
+    year_level_str = student_data.get("year_level") or student_data.get("year") or student_data.get("grade_level") or student_data.get("semester") or "N/A"
 
     st.markdown(
         """
@@ -147,34 +165,27 @@ def show():
         unsafe_allow_html=True,
     )
 
-    auth_client = AuthClient()
-    student_data = st.session_state.get("user_data") or {}
-    if not student_data:
-        student_data = auth_client.get_profile() or {}
-        if student_data:
-            st.session_state["user_data"] = student_data
-
-    student_name = student_data.get("name") or student_data.get("student_name") or student_data.get("full_name") or st.session_state.get("username", "Student")
-    year_level = student_data.get("year_level") or student_data.get("year") or student_data.get("grade_level") or student_data.get("semester")
-    program = student_data.get("program")
-    normalized_year = _normalize_year(year_level)
-
     st.markdown(
         f"""
         <div class='home-header'>
             <h1>Welcome {student_name}</h1>
-            <p>Year level: {normalized_year}</p>
+            <p>Year level: {year_level_str}</p>
         </div>
         """,
         unsafe_allow_html=True,
     )
 
+
     if "cart_items" not in st.session_state:
         st.session_state["cart_items"] = []
 
     book_client = BookClient()
-    if isinstance(normalized_year, int):
-        books = book_client.filter_books(semester_available=normalized_year, program_related=program) or []
+    # Fetch all books (or narrow by program if your API supports it)
+    all_books = book_client.filter_books() or []
+
+    # Filter only those books whose subject_code matches enrolled subjects
+    if enrolled_subjects:
+        books = [book for book in all_books if (book.get("subject_code") or "").strip() in enrolled_subjects]
     else:
         books = []
 
@@ -188,7 +199,7 @@ def show():
         st.markdown(
             """
             <div class='summary-card'>
-                <h3 style='margin-top:0; color:#1e3a8a;'>Required books for this semester</h3>
+                <h3 style='margin-top:0; color:#1e3a8a;'>Required books for your enrolled subjects</h3>
                 <p style='margin:0; color:#475569;'>Select required titles and add them to your cart.</p>
             </div>
             """,
@@ -214,7 +225,7 @@ def show():
                     status_text = "Added to cart"
                     status_class = "status-pill active"
 
-                st.markdown("<div class='book-card'>", unsafe_allow_html=True)
+                st.markdown("<div style='border-bottom:1px solid #e2e8f0; margin:8px 0;'></div>", unsafe_allow_html=True)
                 st.markdown(f"<div class='book-card-title'>{title}</div>", unsafe_allow_html=True)
                 st.markdown(f"<div class='book-card-price'>{price_text}</div>", unsafe_allow_html=True)
 
@@ -234,7 +245,7 @@ def show():
 
                 st.markdown("</div>", unsafe_allow_html=True)
         else:
-            st.warning("No required books found for your current semester.")
+            st.warning("No required books found for your current enrolled subjects.")
 
     with page_col2:
         st.markdown(
@@ -260,3 +271,13 @@ def show():
             st.success("Your cart has been updated.")
 
         st.markdown("</div>", unsafe_allow_html=True)
+
+
+
+
+
+
+
+
+
+    
