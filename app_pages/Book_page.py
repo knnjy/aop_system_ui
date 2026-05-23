@@ -89,10 +89,15 @@ def show():
     for i, book in enumerate(books):
         with cols[i % 2]:
             icon = icons.get(book.get("program_related", ""), "📚")
+            path = book.get('subject_code')
+            if path:
+                st.image(f"http://localhost:9000/static/images/books/{path}.jpg", width=150)
+            else:
+                # fallback icon if no image
+                st.markdown(f"<div class='book-img-placeholder'>{icon}</div>", unsafe_allow_html=True)
 
             st.markdown(f"""
                 <div class='book-card'>
-                    <div class='book-img-placeholder'>{icon}</div>
                     <div class='book-info'>
                         <div class='book-name'>{book.get('title','Unknown')}</div>
                         <div class='book-type'>{book.get('program_related','')} | Stock: {book.get('stock_quantity',0)}</div>
