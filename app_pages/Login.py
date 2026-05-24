@@ -101,7 +101,7 @@ def show_login():
 
         if st.button("Login"):
             response = login_client.login(username, password)
-
+            print(response)
             if response:
                 st.session_state.logged_in = True
                 st.session_state.role = response.get("role")

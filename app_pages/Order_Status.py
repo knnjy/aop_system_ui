@@ -28,7 +28,7 @@ def show():
         "cancelled": "#ef4444"
     }
 
-    statuses = ["To Pay", "Pending", "To Claim", "Item Received"]
+    statuses = ["Pending", "To Pay", "To Claim", "Item Received"]
 
     # =========================
     # DISPLAY ORDERS
@@ -115,5 +115,11 @@ def show():
             unsafe_allow_html=True
         )
 
-        st.button("Cancel Order", key=str(order.get("request_id")))
+        disable_cancel = status in ["To Claim", "Item Received"]
+
+        st.button(
+            "Cancel Order",
+            key=str(order.get("request_id")),
+            disabled=disable_cancel
+        )
         st.markdown("</div>", unsafe_allow_html=True)
