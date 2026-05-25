@@ -53,3 +53,7 @@ class UniformClient:
             return response.json()
         st.error("Failed to filter uniforms")
         return None
+    
+    def get_stocks(self):
+        response = self.client.get("/get-uniform-stocks", headers=self._get_headers())
+        return response.json()

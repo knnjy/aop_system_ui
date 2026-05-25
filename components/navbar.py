@@ -120,7 +120,64 @@ def navbar():
 
 
 def admin_navbar():
+    user = st.session_state.user_data
+    
+
     st.markdown(hide_default_menu, unsafe_allow_html=True)
+    st.markdown(
+    """
+    <style>
+    [data-testid="stSidebar"][aria-expanded="true"] > div:first-child {
+        width: 250px;
+    }
+    [data-testid="stSidebar"][aria-expanded="false"] > div:first-child {
+        width: 350px;
+        margin-left: -350px;
+    }
+    </style>
+    """,
+    unsafe_allow_html=True
+)
+    st.sidebar.markdown(
+        """
+        <style>
+        .sidebar-profile {
+            text-align: center;
+            padding: 20px 10px;
+            background-color: #1e3a8a;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            color: white;
+        }
+        .sidebar-profile img {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            margin-bottom: 10px;
+            border: 2px solid #fbbf24;
+        }
+        .sidebar-profile h3 {
+            margin: 0;
+            font-size: 16px;
+            font-weight: 600;
+        }
+        .sidebar-profile p {
+            margin: 0;
+            font-size: 12px;
+            color: #d1d5db;
+        }
+        </style>
+        """,
+        unsafe_allow_html=True
+    )
+    st.sidebar.markdown(
+        f"""<div class="sidebar-profile">
+            <div class="nav-banner"><div class="nav-avatar">👤</div></div>
+            <h3> {user.get("name")} </h3>
+            <p>{user.get("admin_id")}</p>
+        </div>""",
+        unsafe_allow_html=True
+    )
     menu_options = [
         "Home", "Books", "Uniforms", "Order Request", "Order History", "Account"
     ]
@@ -133,40 +190,46 @@ def admin_navbar():
         default_index = menu_options.index(st.session_state.current_page)
     except ValueError:
         default_index = 0
-    selected = option_menu(
-        menu_title=None,
-        options=menu_options,
-        icons=menu_icons,
-        menu_icon="list",
-        default_index=default_index,
-        orientation="horizontal",
-        key="navbar_menu",
-        styles={
-            "container": {
-                "background-color": "#1e3a8a",
-                "padding": "8px 0",
-                "border-radius": "10px",
-            },
-            "icon": {
-                "color": "white",
-                "font-size": "18px",
-            },
-            "nav-link": {
-                "color": "white",
-                "font-size": "14px",
-                "text-align": "center",
-                "margin": "0 4px",
-                "padding": "10px 16px",
-                "border-radius": "8px",
-                "font-weight": "500",
-            },
-            "nav-link-selected": {
-                "background-color": "#fbbf24",
-                "color": "#1e3a8a",
-                "font-weight": "700",
-                "box-shadow": "0 4px 8px rgba(251, 191, 36, 0.3)",
-            },
-        }
-    )
-
+    
+    with st.sidebar:
+        selected = option_menu(
+            menu_title=None,
+            options=menu_options,
+            icons=menu_icons,
+            menu_icon="list",
+            default_index=default_index,
+            # orientation="horizontal",
+            key="navbar_menu",
+            styles={
+                "container": {
+                    "background-color": "#1e3a8a",
+                    "padding": "8px 0",
+                    "border-radius": "10px",
+                },
+                "icon": {
+                    "color": "white",
+                    "font-size": "18px",
+                },
+                "nav-link": {
+                    "color": "white",
+                    "font-size": "14px",
+                    "text-align": "left",
+                    "margin": "0 4px",
+                    "padding": "10px 16px",
+                    "border-radius": "8px",
+                    "font-weight": "500",
+                },
+                "nav-link-selected": {
+                    "background-color": "#fbbf24",
+                    "color": "#1e3a8a",
+                    "font-weight": "700",
+                    "box-shadow": "0 4px 8px rgba(251, 191, 36, 0.3)",
+                },
+            }
+        )
+        st.sidebar.markdown("---")  # separator line
+        if st.sidebar.button("🚪 Logout", use_container_width=True):
+            st.session_state.logged_in = False
+            st.session_state.current_page = "Home"
+            st.rerun()
     return selected

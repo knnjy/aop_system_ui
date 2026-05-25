@@ -113,15 +113,17 @@ def show():
                 qty = st.number_input("Quantity", min_value=1, max_value=10, value=1, step=1,
                                       key=f"detail_qty_{book.get('book_id','0')}")
             with col2:
-                if st.button("🛒 Add to Cart", key=f"detail_cart_{book.get('book_id','0')}"):
+                if st.button("🛒 Add to Cart", key=f"cart_{book.get('book_id','0')}"):
                     st.session_state.setdefault("cart_items", []).append({
                         "id": book.get('book_id'),
+                        "product_id": book.get('book_id'),
+                        "unit_price": float(book.get('price', 0) or 0),
+                        "quantity": 1,
+                        "subtotal": float(book.get('price', 0) or 0),
                         "title": book.get('title'),
-                        "price": float(book.get('price', 0) or 0),
-                        "info": book.get('program_related', ''),
-                        "quantity": qty
+                        "info": book.get('program_related')
                     })
-                    st.success(f"Added {qty} x {book.get('title','Unknown')} to cart!")
+                    st.success(f"Added {book.get('title','Unknown')} to cart!")
         return
 
     # --- LIST VIEW (Filters + Grid) ---
@@ -173,6 +175,7 @@ def show():
             with cols[j]:
                 icon = icons.get(book.get("program_related", ""), "📚")
                 path = book.get("subject_code", None)
+                book_index = i + j  # Use position in filtered list for unique key
 
                 # Image
                 if path:
@@ -190,6 +193,6 @@ def show():
                 """, unsafe_allow_html=True)
 
                 # --- View Details button per card ---
-                if st.button("🔎 View Details", key=f"view_{book.get('book_id',i+j)}"):
+                if st.button("🔎 View Details", key=f"view_{book_index}"):
                     st.session_state["selected_book"] = book
                     st.rerun()
