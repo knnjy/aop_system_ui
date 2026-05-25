@@ -4,11 +4,11 @@ from services.book_client import BookClient
 def show():
     book_client = BookClient()
 
-    # --- Inject CSS (Blue, White, Gold Theme) ---
+    # --- Inject CSS ---
     st.markdown("""
         <style>
         .stApp { background-color: #ffffff; }
-        .book-title { font-size:28px; font-weight:700; color:#1e3a8a; margin-bottom:20px; }
+        .page-title { font-size:32px; font-weight:800; color:#1e3a8a; }
         .filter-box {
             background-color: #f8fafc;
             border-radius: 12px;
@@ -17,23 +17,20 @@ def show():
             margin-bottom: 20px;
             box-shadow: 0 2px 8px rgba(0,0,0,0.05);
         }
-        .filter-title {
-            font-size:18px; font-weight:700; color:#1e3a8a; margin-bottom:10px;
-        }
+        .filter-title { font-size:18px; font-weight:700; color:#1e3a8a; margin-bottom:10px; }
         .book-card {
             background-color: #f8fafc;
             border-radius: 12px;
             border: 1px solid #e2e8f0;
             margin-bottom: 15px;
-            overflow: hidden;
             box-shadow: 0 2px 8px rgba(0,0,0,0.05);
-            cursor: pointer;
             padding: 10px;
+            text-align:center;
         }
         .book-img-placeholder {
             background-color: #e2e8f0;
             width: 100%;
-            height: 180px;
+            height: 220px;
             display: flex;
             align-items: center;
             justify-content: center;
@@ -47,12 +44,32 @@ def show():
             border: 1px solid #facc15;
             border-radius: 10px;
             padding: 15px;
+            margin-top: 20px;
             margin-bottom: 20px;
+        }
+        .detail-title {
+            font-size:28px;
+            font-weight:800;
+            color:#1e3a8a;
+            margin-top: 20px;
+            margin-bottom: 15px;
+        }
+        .stButton > button {
+            border-radius: 8px;
+            font-weight: 600;
         }
         </style>
     """, unsafe_allow_html=True)
 
-    st.markdown("<div class='book-title'>RTU Book Page</div>", unsafe_allow_html=True)
+    # --- Header with Back Button ---
+    header_col1, header_col2 = st.columns([1,3])
+    with header_col1:
+        if "selected_book" in st.session_state and st.session_state["selected_book"]:
+            if st.button("⬅️ Back to List", key="back_btn_header"):
+                st.session_state["selected_book"] = None
+                st.rerun()
+    with header_col2:
+        st.markdown("<div class='page-title'>RTU Book Page</div>", unsafe_allow_html=True)
 
     # --- Fetch Books ---
     try:
@@ -69,61 +86,56 @@ def show():
     if "selected_book" in st.session_state and st.session_state["selected_book"]:
         book = st.session_state["selected_book"]
 
-        st.markdown(f"<div class='book-title'>{book.get('title','Unknown')}</div>", unsafe_allow_html=True)
+        # 2-column layout: Left = Image, Right = Title + Info + Controls
+        col_img, col_info = st.columns([1.2, 1.8])
 
-        # --- Image ---
-        path = book.get("subject_code", None)
-        if path:
-            st.image(f"http://localhost:9000/static/images/books/{path}.jpg", width=500)
-        else:
-            st.markdown("<div class='book-img-placeholder'>📚</div>", unsafe_allow_html=True)
+        with col_img:
+            path = book.get("subject_code", None)
+            if path:
+                st.image(f"http://localhost:9000/static/images/books/{path}.jpg", use_container_width=True)
+            else:
+                st.markdown("<div class='book-img-placeholder'>📚</div>", unsafe_allow_html=True)
 
-        # --- Info Box ---
-        st.markdown(f"""
-            <div class='detail-box'>
-                <b>Price:</b> ₱{book.get('price','0')} <br>
-                <b>Stock:</b> {book.get('stock_quantity','0')} <br>
-                <b>Program:</b> {book.get('program_related','')}
-            </div>
-        """, unsafe_allow_html=True)
+        with col_info:
+            # Title
+            st.markdown(f"<div class='detail-title'>{book.get('title','Unknown')}</div>", unsafe_allow_html=True)
 
-        # --- Horizontal Controls ---
-        def clear_selected_book():
-            st.session_state["selected_book"] = None
-            st.rerun()
+            # Info box
+            st.markdown(f"""
+                <div class='detail-box'>
+                    <b>Price:</b> ₱{book.get('price','0')} <br>
+                    <b>Stock:</b> {book.get('stock_quantity','0')} <br>
+                    <b>Program:</b> {book.get('program_related','')}
+                </div>
+            """, unsafe_allow_html=True)
 
-        col1, col2, col3 = st.columns([1,1,2])
-        with col1:
-            st.button("⬅️ Back to List", on_click=clear_selected_book)
-        with col2:
-            qty = st.number_input("", min_value=1, max_value=10, value=1, step=1,
-                                  label_visibility="collapsed",
-                                  key=f"detail_qty_{book.get('book_id','0')}")
-        with col3:
-            if st.button("🛒 Add to Cart", key=f"detail_cart_{book.get('book_id','0')}"):
-                st.session_state.setdefault("cart_items", []).append({
-                    "id": book.get('book_id'),
-                    "product_id": book.get('book_id'),
-                    "unit_price": float(book.get('price', 0) or 0),
-                    "quantity": qty,
-                    "subtotal": float(book.get('price', 0) or 0) * qty,
-                    "title": book.get('title'),
-                    "info": book.get('program_related')
-                })
-                st.success(f"Added {qty} x {book.get('title','Unknown')} to cart!")
+            # Controls (Qty + Add to Cart)
+            col2, col3 = st.columns([1,1.5], gap="medium")
+            with col2:
+                qty = st.number_input("Qty", min_value=1, max_value=10, value=1, step=1,
+                                      key=f"detail_qty_{book.get('book_id','0')}")
+            with col3:
+                if st.button("🛒 Add to Cart", key=f"detail_cart_{book.get('book_id','0')}"):
+                    st.session_state.setdefault("cart_items", []).append({
+                        "id": book.get('book_id'),
+                        "title": book.get('title'),
+                        "price": float(book.get('price', 0) or 0),
+                        "info": book.get('program_related', ''),
+                        "quantity": qty
+                    })
+                    st.success(f"Added {qty} x {book.get('title','Unknown')} to cart!")
         return
 
     # --- LIST VIEW (Filters + Grid) ---
     filter_col, book_col = st.columns([1,3])
-
     with filter_col:
         st.markdown("<div class='filter-box'><div class='filter-title'>📑 Filters</div>", unsafe_allow_html=True)
         search_query = st.text_input("🔎 Search books...", key="book_search")
         category = st.selectbox("📂 Category", ["All", "ICS", "CEA", "CAS", "CBEA"], key="book_category")
-        price_range = st.selectbox("💰 Price Range", ["All", "₱0-₱300", "₱301-₱600", "₱601+"], key="book_price_range")
+        price_range = st.selectbox("💰 Price Range", ["All", "₱0-₱300", "₱301-₆00", "₱601+"], key="book_price_range")
         st.markdown("</div>", unsafe_allow_html=True)
 
-    # --- Apply Filters ---
+    # Apply filters
     filtered_books = []
     for book in books:
         try:
@@ -136,7 +148,7 @@ def show():
 
             if price_range == "₱0-₱300":
                 price_match = price_val <= 300
-            elif price_range == "₱301-₱600":
+            elif price_range == "₱301-₆00":
                 price_match = 301 <= price_val <= 600
             elif price_range == "₱601+":
                 price_match = price_val >= 601
@@ -145,64 +157,41 @@ def show():
 
             if title_match and category_match and price_match:
                 filtered_books.append(book)
-
         except Exception as e:
             st.warning(f"Skipped a book due to invalid data: {e}")
             continue
 
-    # --- No Match ---
     if not filtered_books:
-        st.warning("No books found for the selected filter.")
+        st.warning("No books match your filters.")
         return
 
-    # --- Grid Layout (2 cards per row) ---
+    # --- Grid Layout (3 cards per row) ---
     icons = {"ICS": "💻", "CEA": "📐", "CAS": "📖", "CBEA": "📊"}
-    with book_col:
-        for i in range(0, len(filtered_books), 2):
-            row_books = filtered_books[i:i+2]
-            cols = st.columns(2)
-        
-            for j, book in enumerate(row_books):
-                with cols[j]:
-                    try:
-                        icon = icons.get(book.get("program_related", ""), "📚")
-                        path = book.get("subject_code", None)
+    for i in range(0, len(filtered_books), 3):
+        row_books = filtered_books[i:i+3]
+        cols = book_col.columns(3)
 
-                        # --- Image ---
-                        if path:
-                            try:
-                                st.image(f"http://localhost:9000/static/images/books/{path}.jpg", width=350)
-                            except:
-                                st.markdown(f"<div class='book-img-placeholder'>{icon}</div>", unsafe_allow_html=True)
-                        else:
-                            st.markdown(f"<div class='book-img-placeholder'>{icon}</div>", unsafe_allow_html=True)
+        for j, book in enumerate(row_books):
+            with cols[j]:
+                icon = icons.get(book.get("program_related", ""), "📚")
+                path = book.get("subject_code", None)
 
-                        # --- Card Info ---
-                        st.markdown(f"""
-                            <div class='book-card'>
-                                <div class='book-name'>{book.get('title','Unknown')}</div>
-                                <div class='book-type'>{book.get('program_related','')} | Stock: {book.get('stock_quantity',0)}</div>
-                                <div class='book-price'>₱{book.get('price','0')}</div>
-                            </div>
-                        """, unsafe_allow_html=True)
+                # Image
+                if path:
+                    st.image(f"http://localhost:9000/static/images/books/{path}.jpg", width=150)
+                else:
+                    st.markdown(f"<div class='book-img-placeholder'>{icon}</div>", unsafe_allow_html=True)
 
-                        # --- Buttons ---
-                        if st.button("🔎 View Details", key=f"view_{book.get('book_id',i+j)}"):
-                            st.session_state["selected_book"] = book
-                            st.rerun()
-                        if str(book.get("availability","")).lower() == "available":
-                            if st.button("🛒 Add to Cart", key=f"cart_{book.get('book_id',i+j)}"):
-                                st.session_state.setdefault("cart_items", []).append({
-                                "id": book.get('book_id'),
-                                "product_id": book.get('book_id'),
-                                "unit_price": float(book.get('price', 0) or 0),
-                                "quantity": 1,
-                                "subtotal": float(book.get('price', 0) or 0),
-                                "title": book.get('title'),
-                                "info": book.get('program_related')
-                            })
-                            st.success(f"Added {book.get('title','Unknown')} to cart!")
+                # Card Info
+                st.markdown(f"""
+                    <div class='book-card'>
+                        <div class='book-name'>{book.get('title','Unknown')}</div>
+                        <div class='book-type'>{book.get('program_related','')} | Stock: {book.get('stock_quantity',0)}</div>
+                        <div class='book-price'>₱{book.get('price','0')}</div>
+                    </div>
+                """, unsafe_allow_html=True)
 
-                    except Exception as e:
-                        st.warning(f"Skipped rendering a book card due to error: {e}")
-                        continue
+                # --- Only View Details button per card ---
+                if st.button("🔎 View Details", key=f"view_{book.get('book_id',i+j)}"):
+                    st.session_state["selected_book"] = book
+                    st.rerun()
