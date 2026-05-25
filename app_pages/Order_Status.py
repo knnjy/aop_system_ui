@@ -37,7 +37,7 @@ def show():
         if not isinstance(order, dict):
             continue
 
-        status_raw = order.get("status", "pending")
+        status_raw = order.get("status", "Unknown")
         status = status_raw.capitalize()
 
         # match status index safely

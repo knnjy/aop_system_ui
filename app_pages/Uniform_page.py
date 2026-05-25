@@ -81,11 +81,16 @@ def show():
                 st.session_state["selected_uniform_size"] = None
         with col2:
             if st.button("🛒 Add to Cart", key=f"confirm_cart_{uniform.get('product_id', 0)}", disabled=not selected_size):
-                if "cart" not in st.session_state:
-                    st.session_state["cart"] = []
-                item = uniform.copy()
-                item["selected_size"] = selected_size
-                st.session_state["cart"].append(item)
+                if "cart_items" not in st.session_state:
+                    st.session_state["cart_items"] = []
+                cart_item = {
+                    "id": uniform.get('product_id'),
+                    "title": uniform.get('product_name'),
+                    "price": float(uniform.get('price', 0) or 0),
+                    "info": f"{uniform.get('uniform_type', '')} - Size: {selected_size}",
+                    "quantity": 1
+                }
+                st.session_state["cart_items"].append(cart_item)
                 st.success(f"Added {uniform.get('product_name')} ({selected_size}) to cart!")
                 st.session_state["selected_uniform"] = None
                 st.session_state["selected_uniform_size"] = None

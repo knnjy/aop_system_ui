@@ -30,7 +30,8 @@ def show():
 
     st.markdown("<div class='oh-title'>Order History</div>", unsafe_allow_html=True)
 
-    current_user_id = st.session_state.get("user_data", {}).get("user_id") or st.session_state.get("username")
+    # get user id
+    current_user_id = st.session_state.get("user_id")
 
     try:
         orders = order_client.list_orders() or []
