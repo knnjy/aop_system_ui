@@ -8,7 +8,13 @@ def show():
     st.markdown("""
         <style>
         .stApp { background-color: #ffffff; }
-        .page-title { font-size:32px; font-weight:800; color:#1e3a8a; }
+        .page-title {
+            font-size:32px;
+            font-weight:800;
+            color:#1e3a8a;
+            margin-bottom:10px;
+            text-align:left;   /* ✅ align to left */
+        }
         .filter-box {
             background-color: #f8fafc;
             border-radius: 12px;
@@ -25,12 +31,11 @@ def show():
             margin-bottom: 15px;
             box-shadow: 0 2px 8px rgba(0,0,0,0.05);
             padding: 10px;
-            text-align:center;
         }
         .book-img-placeholder {
             background-color: #e2e8f0;
             width: 100%;
-            height: 220px;
+            height: 180px;
             display: flex;
             align-items: center;
             justify-content: center;
@@ -44,15 +49,7 @@ def show():
             border: 1px solid #facc15;
             border-radius: 10px;
             padding: 15px;
-            margin-top: 20px;
             margin-bottom: 20px;
-        }
-        .detail-title {
-            font-size:28px;
-            font-weight:800;
-            color:#1e3a8a;
-            margin-top: 20px;
-            margin-bottom: 15px;
         }
         .stButton > button {
             border-radius: 8px;
@@ -61,15 +58,16 @@ def show():
         </style>
     """, unsafe_allow_html=True)
 
-    # --- Header with Back Button ---
-    header_col1, header_col2 = st.columns([1,3])
-    with header_col1:
-        if "selected_book" in st.session_state and st.session_state["selected_book"]:
-            if st.button("⬅️ Back to List", key="back_btn_header"):
+    # --- Page Title ---
+    st.markdown("<div class='page-title'>RTU Book Page</div>", unsafe_allow_html=True)
+
+    # --- Back to List button (top left, only in detail view) ---
+    if "selected_book" in st.session_state and st.session_state["selected_book"]:
+        col_back, _ = st.columns([1,3])
+        with col_back:
+            if st.button("⬅️ Back to List", key="back_btn_top"):
                 st.session_state["selected_book"] = None
                 st.rerun()
-    with header_col2:
-        st.markdown("<div class='page-title'>RTU Book Page</div>", unsafe_allow_html=True)
 
     # --- Fetch Books ---
     try:
@@ -92,13 +90,13 @@ def show():
         with col_img:
             path = book.get("subject_code", None)
             if path:
-                st.image(f"http://localhost:9000/static/images/books/{path}.jpg", use_container_width=True)
+                st.image(f"http://localhost:9000/static/images/books/{path}.jpg", use_container_width=True)  # ✅ fixed
             else:
                 st.markdown("<div class='book-img-placeholder'>📚</div>", unsafe_allow_html=True)
 
         with col_info:
-            # Title
-            st.markdown(f"<div class='detail-title'>{book.get('title','Unknown')}</div>", unsafe_allow_html=True)
+            # Title moved here
+            st.markdown(f"<div class='page-title'>{book.get('title','Unknown')}</div>", unsafe_allow_html=True)
 
             # Info box
             st.markdown(f"""
@@ -109,12 +107,12 @@ def show():
                 </div>
             """, unsafe_allow_html=True)
 
-            # Controls (Qty + Add to Cart)
-            col2, col3 = st.columns([1,1.5], gap="medium")
-            with col2:
-                qty = st.number_input("Qty", min_value=1, max_value=10, value=1, step=1,
+            # Horizontal controls
+            col1, col2 = st.columns([1,2], gap="medium")
+            with col1:
+                qty = st.number_input("Quantity", min_value=1, max_value=10, value=1, step=1,
                                       key=f"detail_qty_{book.get('book_id','0')}")
-            with col3:
+            with col2:
                 if st.button("🛒 Add to Cart", key=f"detail_cart_{book.get('book_id','0')}"):
                     st.session_state.setdefault("cart_items", []).append({
                         "id": book.get('book_id'),
@@ -191,7 +189,7 @@ def show():
                     </div>
                 """, unsafe_allow_html=True)
 
-                # --- Only View Details button per card ---
+                # --- View Details button per card ---
                 if st.button("🔎 View Details", key=f"view_{book.get('book_id',i+j)}"):
                     st.session_state["selected_book"] = book
                     st.rerun()
