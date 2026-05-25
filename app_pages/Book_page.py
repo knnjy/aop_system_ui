@@ -185,4 +185,4 @@ def show():
 
                     except Exception as e:
                         st.warning(f"Skipped rendering a book card due to error: {e}")
-                        continue
+                        continue 
