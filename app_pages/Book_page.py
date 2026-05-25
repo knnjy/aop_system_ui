@@ -171,7 +171,7 @@ def show():
                         # --- Image ---
                         if path:
                             try:
-                                st.image(f"http://localhost:9000/static/images/books/{path}.jpg", width=150)
+                                st.image(f"http://localhost:9000/static/images/books/{path}.jpg", width=350)
                             except:
                                 st.markdown(f"<div class='book-img-placeholder'>{icon}</div>", unsafe_allow_html=True)
                         else:

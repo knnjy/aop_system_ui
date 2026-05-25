@@ -1,5 +1,6 @@
 import streamlit as st
 
+
 st.set_page_config(layout="wide")
 
 from app_pages.admin_pages import admin_books, admin_home, admin_order_history, admin_order_request, admin_uniform
@@ -34,8 +35,9 @@ if 'role' not in st.session_state:
 
 # ROUTING
 if not st.session_state.logged_in:
-    Login.show_login()
+    Login.show_login()  
 else:
+
     if st.session_state['role'] == 'Admin':
         selected = admin_navbar()
         pages = {
