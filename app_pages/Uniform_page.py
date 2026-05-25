@@ -60,6 +60,7 @@ def show():
 
     if st.session_state.get("uniform_cart_mode") and selected_uniform:
         uniform = selected_uniform
+        
         total_stock = sum([s.get("product_stock", 0) for s in uniform.get("sizes", [])])
         key_base = f"detail_{uniform.get('product_id', 0)}"
         selected_size = st.session_state.get("selected_uniform_size", None)
@@ -101,12 +102,16 @@ def show():
             if st.button("Add to Cart", key=f"confirm_cart_{uniform.get('product_id', 0)}", disabled=not selected_size):
                 if "cart_items" not in st.session_state:
                     st.session_state["cart_items"] = []
+                # Find the size_info that matches selected_size
+                size_info = next((s for s in uniform.get("sizes", []) if s.get("size") == selected_size), {})
                 cart_item = {
-                    "id": uniform.get("product_id"),
+                    "id": size_info.get("uniform_size_id"),
+                    "product_id": size_info.get("uniform_size_id"),
                     "title": uniform.get("product_name"),
-                    "price": float(uniform.get("price", 0) or 0),
                     "info": f"{uniform.get('uniform_type', '')} - Size: {selected_size}",
-                    "quantity": 1
+                    "unit_price": float(uniform.get("price", 0) or 0),
+                    "quantity": 1,
+                    "subtotal": float(uniform.get("price", 0) or 0)
                 }
                 st.session_state["cart_items"].append(cart_item)
                 st.success(f"Added {uniform.get('product_name')} ({selected_size}) to cart!")

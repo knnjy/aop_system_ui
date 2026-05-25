@@ -39,13 +39,13 @@ def show():
                 cart = st.session_state.cart_items
                 order_data = {
                     "user_id": st.session_state.user_id,
-                    "total_amount": total,
+                    "total_amount": int(total),
                     "order_items": [
                         {
-                            "product_id": item['product_id'],
-                            "unit_price": item['unit_price'],
-                            "quantity": item['quantity'],
-                            "subtotal": item['unit_price'] * item['quantity']
+                            "product_id": str(item['product_id']),
+                            "unit_price": int(item['unit_price']),
+                            "quantity": int(item['quantity']),
+                            "subtotal": int(item['unit_price'] * item['quantity'])
                         }
                         for item in cart
                     ]
