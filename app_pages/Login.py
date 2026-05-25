@@ -2,6 +2,7 @@ import streamlit as st
 from services.auth_client import AuthClient
 
 login_client = AuthClient()
+st.set_page_config(page_title="Student Portal Login", layout="wide")
 
 # Custom CSS
 st.markdown("""
@@ -11,51 +12,11 @@ st.markdown("""
     [data-testid="collapsedControl"] {display: none !important;}
     #MainMenu, footer, header {visibility: hidden;}
 
-    /* Remove default padding */
+    /*container*/
     .block-container {
-        padding: 0 !important;
-        max-width: 100% !important;
-    }
-
-    /* Text inputs */
-    .stTextInput input {
-        border-radius: 10px !important;
-        border: 1px solid #d5d9e5 !important;
-        padding: 12px 14px !important;
-        font-size: 15px !important;
-        background-color: #fff !important;
-        transition: border-color 0.15s ease, box-shadow 0.15s ease !important;
-    }
-
-    /* Hover */
-    .stTextInput input:hover {
-        border-color: #3949ab !important;
-    }
-
-    /* Focus */
-    .stTextInput input:focus {
-        border-color: #3949ab !important;
-        box-shadow: 0 0 0 2px rgba(57,73,171,0.10) !important;
-        outline: none !important;
-    }
-
-    /* Button */
-    .stButton > button {
-        color: white !important;
-        border: 1px solid #3949ab !important;
-        border-radius: 8px !important;
-        width: 100% !important;
-        padding: 12px 18px !important;
-        font-size: 18px !important;
-        font-weight: 700 !important;
-        cursor: pointer !important;
-        background-color: #2d3a8c !important;
-        transition: background-color 0.2s ease !important;
-        margin-top: 8px !important;
-    }
-
-    .stButton > button:hover {
-        background-color: #1a237e !important;
+        padding-top: 1rem !important;
+        padding-bottom: 2rem !important;
+        background-color: #ffffff !important;
     }
 
     /* Forgot password */
@@ -82,7 +43,7 @@ def show_login():
 
     with col:
         st.markdown(
-            "<h2 style='text-align:center; color:#2d3a8c; font-weight:800; font-family:Arial; margin-bottom:26px;'>Student Login</h2>",
+            "<h2 style='text-align:center; color:#2d3a8c; font-weight:800; font-family:Arial; margin-bottom:30px;'>Student Login</h2>",
             unsafe_allow_html=True
         )
 
