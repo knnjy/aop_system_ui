@@ -74,7 +74,7 @@ def show():
         # --- Image ---
         path = book.get("subject_code", None)
         if path:
-            st.image(f"http://localhost:9000/static/images/books/{path}.jpg", width=200)
+            st.image(f"http://localhost:9000/static/images/books/{path}.jpg", width=500)
         else:
             st.markdown("<div class='book-img-placeholder'>📚</div>", unsafe_allow_html=True)
 
@@ -103,10 +103,12 @@ def show():
             if st.button("🛒 Add to Cart", key=f"detail_cart_{book.get('book_id','0')}"):
                 st.session_state.setdefault("cart_items", []).append({
                     "id": book.get('book_id'),
+                    "product_id": book.get('book_id'),
+                    "unit_price": float(book.get('price', 0) or 0),
+                    "quantity": qty,
+                    "subtotal": float(book.get('price', 0) or 0) * qty,
                     "title": book.get('title'),
-                    "price": float(book.get('price', 0) or 0),
-                    "info": book.get('program_related', ''),
-                    "quantity": qty
+                    "info": book.get('program_related')
                 })
                 st.success(f"Added {qty} x {book.get('title','Unknown')} to cart!")
         return
@@ -159,7 +161,7 @@ def show():
         for i in range(0, len(filtered_books), 2):
             row_books = filtered_books[i:i+2]
             cols = st.columns(2)
-
+        
             for j, book in enumerate(row_books):
                 with cols[j]:
                     try:
@@ -169,7 +171,7 @@ def show():
                         # --- Image ---
                         if path:
                             try:
-                                st.image(f"http://localhost:9000/static/images/books/{path}.jpg", width=150)
+                                st.image(f"http://localhost:9000/static/images/books/{path}.jpg", width=350)
                             except:
                                 st.markdown(f"<div class='book-img-placeholder'>{icon}</div>", unsafe_allow_html=True)
                         else:
@@ -191,13 +193,15 @@ def show():
                         if str(book.get("availability","")).lower() == "available":
                             if st.button("🛒 Add to Cart", key=f"cart_{book.get('book_id',i+j)}"):
                                 st.session_state.setdefault("cart_items", []).append({
-                                    "id": book.get('book_id'),
-                                    "title": book.get('title'),
-                                    "price": float(book.get('price', 0) or 0),
-                                    "info": book.get('program_related', ''),
-                                    "quantity": 1
-                                })
-                                st.success(f"Added 1 x {book.get('title','Unknown')} to cart!")
+                                "id": book.get('book_id'),
+                                "product_id": book.get('book_id'),
+                                "unit_price": float(book.get('price', 0) or 0),
+                                "quantity": 1,
+                                "subtotal": float(book.get('price', 0) or 0),
+                                "title": book.get('title'),
+                                "info": book.get('program_related')
+                            })
+                            st.success(f"Added {book.get('title','Unknown')} to cart!")
 
                     except Exception as e:
                         st.warning(f"Skipped rendering a book card due to error: {e}")

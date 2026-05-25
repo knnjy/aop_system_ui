@@ -213,7 +213,7 @@ def show():
                 price_text = _format_price(book.get("price", 0))
                 already_ordered = _is_book_ordered(book)
                 out_of_stock = _is_out_of_stock(book)
-                in_cart = any(item["id"] == book_id for item in st.session_state["cart_items"])
+                in_cart = any(item["book_id"] == book_id for item in st.session_state["cart_items"])
 
                 status_text = None
                 status_class = "status-pill"
