@@ -9,6 +9,17 @@ def show():
         <style>
         .stApp { background-color: #ffffff; }
         .book-title { font-size:28px; font-weight:700; color:#1e3a8a; margin-bottom:20px; }
+        .filter-box {
+            background-color: #f8fafc;
+            border-radius: 12px;
+            border: 1px solid #e2e8f0;
+            padding: 15px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+        }
+        .filter-title {
+            font-size:18px; font-weight:700; color:#1e3a8a; margin-bottom:10px;
+        }
         .book-card {
             background-color: #f8fafc;
             border-radius: 12px;
@@ -17,6 +28,7 @@ def show():
             overflow: hidden;
             box-shadow: 0 2px 8px rgba(0,0,0,0.05);
             cursor: pointer;
+            padding: 10px;
         }
         .book-img-placeholder {
             background-color: #e2e8f0;
@@ -27,7 +39,6 @@ def show():
             justify-content: center;
             font-size: 32px;
         }
-        .book-info { padding: 12px; }
         .book-name { font-size:16px; font-weight:700; color:#1e3a8a; }
         .book-price { font-size:14px; color:#d97706; font-weight:600; margin-top:4px; }
         .book-type { font-size:12px; color:#64748b; margin-top:2px; }
@@ -63,61 +74,101 @@ def show():
             <div class='detail-box'>
                 <b>Price:</b> ₱{book.get('price','0')} <br>
                 <b>Stock:</b> {book.get('stock_quantity','0')} <br>
-                <b>Program:</b> {book.get('program_related','')} <br>
-                <b>Availability:</b> {book.get('availability','')}
+                <b>Program:</b> {book.get('program_related','')}
             </div>
         """, unsafe_allow_html=True)
 
-        # Buttons for Detail View
         col1, col2 = st.columns([1,1])
         with col1:
             if st.button("⬅️ Back to List"):
                 st.session_state["selected_book"] = None
         with col2:
-            if book.get("availability","").lower() == "available":
+            if str(book.get("availability","")).lower() == "available":
                 if st.button("🛒 Add to Cart", key=f"detail_cart_{book.get('book_id','0')}"):
                     if "cart" not in st.session_state:
                         st.session_state["cart"] = []
                     st.session_state["cart"].append(book)
-                    st.success(f"Added {book.get('title')} to cart!")
+                    st.success(f"Added {book.get('title','Unknown')} to cart!")
         return
 
-    # --- LIST VIEW ---
-    icons = {"ICS": "💻", "CEA": "📐", "CAS": "📖", "CBEA": "📊"}
-    cols = st.columns(2)
+    # --- LIST VIEW (Filters + Grid) ---
+    filter_col, book_col = st.columns([1,3])
 
-    for i, book in enumerate(books):
-        with cols[i % 2]:
-            icon = icons.get(book.get("program_related", ""), "📚")
-            path = book.get('subject_code')
-            if path:
-                st.image(f"http://localhost:9000/static/images/books/{path}.jpg", width=150)
+    with filter_col:
+        st.markdown("<div class='filter-box'><div class='filter-title'>📑 Filters</div>", unsafe_allow_html=True)
+        search_query = st.text_input("🔎 Search books...", key="book_search")
+        category = st.selectbox("📂 Category", ["All", "ICS", "CEA", "CAS", "CBEA"], key="book_category")
+        price_range = st.selectbox("💰 Price Range", ["All", "₱0-₱300", "₱301-₱600", "₱601+"], key="book_price_range")
+        st.markdown("</div>", unsafe_allow_html=True)
+
+    # --- Apply Filters ---
+    filtered_books = []
+    for book in books:
+        try:
+            title = str(book.get("title", ""))
+            program = str(book.get("program_related", ""))
+            price_val = float(book.get("price", 0) or 0)
+
+            title_match = search_query.lower() in title.lower() if search_query else True
+            category_match = (category == "All" or program == category)
+
+            if price_range == "₱0-₱300":
+                price_match = price_val <= 300
+            elif price_range == "₱301-₱600":
+                price_match = 301 <= price_val <= 600
+            elif price_range == "₱601+":
+                price_match = price_val >= 601
             else:
-                # fallback icon if no image
-                st.markdown(f"<div class='book-img-placeholder'>{icon}</div>", unsafe_allow_html=True)
+                price_match = True
 
-            st.markdown(f"""
-                <div class='book-card'>
-                    <div class='book-info'>
-                        <div class='book-name'>{book.get('title','Unknown')}</div>
-                        <div class='book-type'>{book.get('program_related','')} | Stock: {book.get('stock_quantity',0)}</div>
-                        <div class='book-price'>₱{book.get('price','0')}</div>
-                    </div>
-                </div>
-            """, unsafe_allow_html=True)
+            if title_match and category_match and price_match:
+                filtered_books.append(book)
 
-            # Horizontal buttons
-            btn_col1, btn_col2 = st.columns([1,1])
-            with btn_col1:
-                if st.button("🔎 View Details", key=f"view_{book.get('book_id',i)}"):
-                    st.session_state["selected_book"] = book
-            with btn_col2:
-                if book.get("availability","").lower() == "available":
-                    if st.button("🛒 Add to Cart", key=f"cart_{book.get('book_id',i)}"):
-                        if "cart" not in st.session_state:
-                            st.session_state["cart"] = []
-                        st.session_state["cart"].append(book)
-                        st.success(f"Added {book.get('title')} to cart!")
+        except Exception as e:
+            st.warning(f"Skipped a book due to invalid data: {e}")
+            continue
 
-# if __name__ == "__main__":
-#     show()
+    # --- Grid Layout (2 cards per row) ---
+    icons = {"ICS": "💻", "CEA": "📐", "CAS": "📖", "CBEA": "📊"}
+    with book_col:
+        for i in range(0, len(filtered_books), 2):
+            row_books = filtered_books[i:i+2]
+            cols = st.columns(2)
+
+            for j, book in enumerate(row_books):
+                with cols[j]:
+                    try:
+                        icon = icons.get(book.get("program_related", ""), "📚")
+                        path = book.get("subject_code", None)
+
+                        # --- Image ---
+                        if path:
+                            try:
+                                st.image(f"http://localhost:9000/static/images/books/{path}.jpg", width=150)
+                            except:
+                                st.markdown(f"<div class='book-img-placeholder'>{icon}</div>", unsafe_allow_html=True)
+                        else:
+                            st.markdown(f"<div class='book-img-placeholder'>{icon}</div>", unsafe_allow_html=True)
+
+                        # --- Card Info ---
+                        st.markdown(f"""
+                            <div class='book-card'>
+                                <div class='book-name'>{book.get('title','Unknown')}</div>
+                                <div class='book-type'>{book.get('program_related','')} | Stock: {book.get('stock_quantity',0)}</div>
+                                <div class='book-price'>₱{book.get('price','0')}</div>
+                            </div>
+                        """, unsafe_allow_html=True)
+
+                        # --- Buttons (flat, no nesting) ---
+                        if st.button("🔎 View Details", key=f"view_{book.get('book_id',i+j)}"):
+                            st.session_state["selected_book"] = book
+                        if str(book.get("availability","")).lower() == "available":
+                            if st.button("🛒 Add to Cart", key=f"cart_{book.get('book_id',i+j)}"):
+                                if "cart" not in st.session_state:
+                                    st.session_state["cart"] = []
+                                st.session_state["cart"].append(book)
+                                st.success(f"Added {book.get('title','Unknown')} to cart!")
+
+                    except Exception as e:
+                        st.warning(f"Skipped rendering a book card due to error: {e}")
+                        continue
