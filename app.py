@@ -20,7 +20,7 @@ if 'previous_page' not in st.session_state:
 if not st.session_state.logged_in:
     Login.show_login()
 else:
-    selected = navbar()   # ✅ only call navbar after login
+    selected = navbar() # ✅ only call navbar after login
 
     # if st.session_state.current_page == 'homepage' or selected == "Home":
     #     Home.show()
