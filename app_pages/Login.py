@@ -2,6 +2,7 @@ import streamlit as st
 from services.auth_client import AuthClient
 
 login_client = AuthClient()
+# st.set_page_config(layout="centered")
 
 # Custom CSS
 st.markdown("""
@@ -16,6 +17,13 @@ st.markdown("""
         padding-top: 1rem !important;
         padding-bottom: 2rem !important;
         background-color: #ffffff !important;
+    }
+
+    /* Login container */
+    .login-container {
+        max-width: 350px;
+        margin: 0 auto;
+        padding: 40px 20px;
     }
 
     /* Forgot password */
@@ -39,14 +47,14 @@ st.markdown("""
 
 def show_login():
     st.markdown(
-        "<h2 style='text-align:center; color:#2d3a8c; font-weight:800; font-family:Arial; margin-bottom:26px;'>Student Portal Login</h2>",
+        "<div class='login-container'><h2 style='text-align:center; color:#2d3a8c; font-weight:800; font-family:Arial; margin-bottom:26px;'>Student Portal Login</h2>",
         unsafe_allow_html=True
     )
     
     username = st.text_input("Username", placeholder="Enter your username")
     password = st.text_input("Password", type="password", placeholder="Enter your password")
 
-    if st.button("Login"):
+    if st.button("Login", use_container_width=True):
         response = login_client.login(username, password)
         print(response)
         if response:
