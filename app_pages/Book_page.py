@@ -88,9 +88,13 @@ def show():
         """, unsafe_allow_html=True)
 
         # --- Horizontal Controls ---
+        def clear_selected_book():
+            st.session_state["selected_book"] = None
+            st.rerun()
+
         col1, col2, col3 = st.columns([1,1,2])
         with col1:
-            st.button("⬅️ Back to List", on_click=lambda: st.session_state.update({"selected_book": None}))
+            st.button("⬅️ Back to List", on_click=clear_selected_book)
         with col2:
             qty = st.number_input("", min_value=1, max_value=10, value=1, step=1,
                                   label_visibility="collapsed",
@@ -184,7 +188,7 @@ def show():
                         # --- Buttons ---
                         if st.button("🔎 View Details", key=f"view_{book.get('book_id',i+j)}"):
                             st.session_state["selected_book"] = book
-                            st.experimental_rerun()
+                            st.rerun()
                         if str(book.get("availability","")).lower() == "available":
                             if st.button("🛒 Add to Cart", key=f"cart_{book.get('book_id',i+j)}"):
                                 st.session_state.setdefault("cart_items", []).append({
