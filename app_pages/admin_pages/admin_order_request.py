@@ -24,20 +24,33 @@ def _safe_rerun():
     except Exception:
         st.session_state["_refresh"] = not st.session_state.get("_refresh", False)
 
-def _schedule_mark_claimed(request_id: str, delay: int = 30):
-    """Background timer to set status to 'claimed' after delay seconds.
-    This thread must not touch Streamlit objects.
+def _schedule_to_claim_then_claim(request_id: str, delay_to_claim: int = 30, delay_to_claimed: int = 30):
+    """Schedule a background chain:
+    1) after delay_to_claim seconds set status -> 'to_claim'
+    2) after delay_to_claimed seconds from that point set status -> 'claimed'
+    This runs in background threads and must not touch Streamlit objects.
     """
-    def _job():
+    def _job_to_claim():
         try:
-            # small pause to let the first update settle
-            time.sleep(0.5)
-            order_client.update_order(request_id, {"status": "claimed"})
+            order_client.update_order(request_id, {"status": "to_claim"})
         except Exception:
             traceback.print_exc()
-    timer = threading.Timer(delay, _job)
-    timer.daemon = True
-    timer.start()
+            return
+
+        # schedule final transition to 'claimed'
+        def _job_to_claimed():
+            try:
+                order_client.update_order(request_id, {"status": "claimed"})
+            except Exception:
+                traceback.print_exc()
+
+        t2 = threading.Timer(delay_to_claimed, _job_to_claimed)
+        t2.daemon = True
+        t2.start()
+
+    t1 = threading.Timer(delay_to_claim, _job_to_claim)
+    t1.daemon = True
+    t1.start()
 
 def _normalize_orders(orders):
     """Return a list of order dicts regardless of backend shape."""
@@ -79,15 +92,66 @@ def flash_show():
     else:
         st.info(message)
     if details is not None:
-        # show backend response or extra info in a compact way
         st.write("Details:", details)
 
 # ---------- Pages ----------
-def claimed():
-    st.markdown("<h1 style='color:#1e3a8a;'>Claimed Orders</h1>", unsafe_allow_html=True)
+def claiming_page():
+    """Claiming page: show 'Mark as Claimed' (to_claim orders) above claimed orders."""
+    st.markdown("<h1 style='color:#1e3a8a;'>Claiming</h1>", unsafe_allow_html=True)
+
     orders = order_client.list_orders()
     orders = _normalize_orders(orders)
 
+    # ---------- to_claim section ----------
+    to_claim_orders = [o for o in orders if (o.get("status") or "").lower() == "to_claim"]
+
+    st.markdown("<h2 style='color:#1e3a8a;'>Mark as Claimed</h2>", unsafe_allow_html=True)
+    if not to_claim_orders:
+        st.info("No orders waiting to be marked as claimed")
+    else:
+        header_cols = st.columns([1, 2, 3, 2, 2, 2])
+        headers = ["Order #", "Date", "Items", "Total", "User ID", "Action"]
+        for col, text in zip(header_cols, headers):
+            col.markdown(f"<strong style='color:#1e3a8a;'>{text}</strong>", unsafe_allow_html=True)
+
+        for o in to_claim_orders:
+            request_id = o.get("request_id") or o.get("id") or "N/A"
+            date = o.get("date_created") or o.get("date") or datetime.now().strftime("%Y-%m-%d")
+            items = o.get("order_item_ids") or o.get("items") or []
+            total = o.get("total_amount") or o.get("total_price") or 0
+            user_id = o.get("user_id") or "N/A"
+
+            c1, c2, c3, c4, c5, c6 = st.columns([1, 2, 3, 2, 2, 2])
+            c1.write(request_id)
+            c2.write(date)
+            c3.write(_format_items(items))
+            c4.write(f"${float(total):.2f}")
+            c5.write(user_id)
+
+            mark_key = f"mark_claimed_{request_id}"
+            if c6.button("Mark Claimed", key=mark_key):
+                with st.spinner(f"Marking {request_id} as claimed..."):
+                    try:
+                        resp = order_client.update_order(request_id, {"status": "claimed"})
+                    except Exception as e:
+                        resp = None
+                        flash_set("error", f"API error while marking {request_id} as claimed", str(e))
+                        _safe_rerun()
+                        return
+
+                    if resp:
+                        flash_set("success", f"Order {request_id} marked as claimed.", details=resp)
+                        _safe_rerun()
+                        return
+                    else:
+                        flash_set("error", f"Failed to mark order {request_id} as claimed.")
+                        _safe_rerun()
+                        return
+
+    st.markdown("---")
+
+    # ---------- claimed section ----------
+    st.markdown("<h2 style='color:#1e3a8a;'>Claimed Orders</h2>", unsafe_allow_html=True)
     claimed_orders = [o for o in orders if (o.get("status") or "").lower() in ("claimed", "received")]
 
     if not claimed_orders:
@@ -154,7 +218,8 @@ def requests():
         if col6.button("✅ Approve", key=approve_key):
             with st.spinner(f"Approving order {request_id}..."):
                 try:
-                    resp = order_client.update_order(request_id, {"status": "to_claim"})
+                    # set to 'to_pay' immediately
+                    resp = order_client.update_order(request_id, {"status": "to_pay", "approved_by": st.session_state.get("account_id")})
                 except Exception as e:
                     resp = None
                     flash_set("error", f"API error while approving {request_id}", str(e))
@@ -162,9 +227,9 @@ def requests():
                     return
 
                 if resp:
-                    _schedule_mark_claimed(request_id, delay=30)
-                    # set flash so message survives rerun
-                    flash_set("success", f"Order {request_id} successfully approved (to_claim). It will be marked claimed in 30s.", details=resp)
+                    # wait 30s in 'to_pay', then set to 'to_claim', then after another 30s set to 'claimed'
+                    _schedule_to_claim_then_claim(request_id, delay_to_claim=30, delay_to_claimed=30)
+                    flash_set("success", f"Order {request_id} set to 'to_pay'. It will move to 'to_claim' after 30s and to 'claimed' 30s after that.", details=resp)
                     _safe_rerun()
                     return
                 else:
@@ -229,4 +294,4 @@ def show():
     elif st.session_state.page == "claimed":
         if st.button("Back to Order Requests", key="back_btn"):
             st.session_state.page = "orders"
-        claimed()
+        claiming_page()

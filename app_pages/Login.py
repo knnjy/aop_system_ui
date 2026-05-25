@@ -55,6 +55,7 @@ def show_login():
             st.session_state.username = username
             st.session_state.user_data = response.get("user_data", {})
             st.session_state.current_page = "homepage" 
+            st.session_state.account_id = response.get("account_id")
             st.success(f"Welcome, {username}!")
             st.rerun()
         else:
