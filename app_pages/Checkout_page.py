@@ -20,16 +20,16 @@ def show():
             col1, col2, col3, col4, col5, col6 = st.columns([3, 2, 1, 2, 1, 1])
             col1.markdown(f"**{item['title']}**")
             col2.markdown(f"<span style='   color:#6b7280;'>{item['info']}</span>", unsafe_allow_html=True)
-            col3.markdown(f"₱{item['price']:.2f}")
-            new_qty = col4.number_input("", min_value=1, value=item['quantity'], key=f"qty_{item['id']}", label_visibility="collapsed")
+            col3.markdown(f"₱{item['unit_price']:.2f}")
+            new_qty = col4.number_input("", min_value=1, value=item['quantity'], key=f"qty_{item['order_item_id']}", label_visibility="collapsed")
             item['quantity'] = new_qty
-            col5.markdown(f"**₱{item['price'] * item['quantity']:.2f}**")
-            if col6.button("🗑️", key=f"remove_{item['id']}"):
+            col5.markdown(f"**₱{item['unit_price'] * item['quantity']:.2f}**")
+            if col6.button("🗑️", key=f"remove_{item['order_item_id']}"):
                 st.session_state.cart_items = [i for i in st.session_state.cart_items if i['id'] != item['id']]
                 st.rerun()
 
         # Total section
-        total = sum(item['price'] * item['quantity'] for item in st.session_state.cart_items)
+        total = sum(item['unit_price'] * item['quantity'] for item in st.session_state.cart_items)
         st.markdown(f"<hr><h3 style='text-align:right;color:#1e3a8a;'>Total: ₱{total:.2f}</h3>", unsafe_allow_html=True)
 
         col1, col2, col3 = st.columns([2, 1, 1])
@@ -37,9 +37,12 @@ def show():
             if st.button("💳 Proceed to Check out", use_container_width=True, type="primary"):
                 # Create order from cart items
                 order_data = {
-                    "items": st.session_state.cart_items,
-                    "total_amount": total
+                    "user_id": st.session_state.user_id,
+                    "order_items": st.session_state.cart_items,
+                    "total_amount": total,
+                    "status": "pending"
                 }
+                print(order_data)
                 result = order_client.add_order(order_data)
                 if result:
                     st.success("Order placed successfully!")

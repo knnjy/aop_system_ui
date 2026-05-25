@@ -141,7 +141,7 @@ def show():
         for i in range(0, len(filtered_books), 2):
             row_books = filtered_books[i:i+2]
             cols = st.columns(2)
-
+        
             for j, book in enumerate(row_books):
                 with cols[j]:
                     try:
@@ -174,9 +174,9 @@ def show():
                                 if "cart_items" not in st.session_state:
                                     st.session_state["cart_items"] = []
                                 cart_item = {
-                                    "id": book.get('book_id'),
+                                    "order_item_id": book.get('book_id'),
                                     "title": book.get('title'),
-                                    "price": float(book.get('price', 0) or 0),
+                                    "unit_price": float(book.get('price', 0) or 0),
                                     "info": book.get('program_related', ''),
                                     "quantity": 1
                                 }
