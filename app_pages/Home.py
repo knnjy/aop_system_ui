@@ -273,6 +273,39 @@ def show():
         st.markdown("</div>", unsafe_allow_html=True)
 
 
+    st.write("")
+    st.write("")
+    st.markdown(
+        """
+        <div style='color:#1e3a8a;'>
+            <h1 style='color:#1e3a8a;'>About this app</h1>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
+    st.markdown(
+        """
+        <div style='color:#1e3a8a;'>
+        <p>
+        This web application is designed to help students easily find and request an order for their required books based on their current enrolled subjects. This app automatically identifies the student's enrolled subjects and displays the required books. 
+        It automates the listing of required books, sum them app to compute the total price, and allows students and admins to manage their orders efficiently.
+        </p>
+        <p> </p>
+
+        <p>1) For the user page, the app consists of multiple pages each with a specific function.</p>
+        <p>2) The Home page displays the required books based on the student's enrolled subjects, allowing them to add books to their cart.</p> 
+        <p>3) The Books page provides a comprehensive list of all available books, while the Uniforms page lists the RTU uniforms.</p>
+        <p>4) The Checkout Page allows students to review their cart and place orders, while the Order Status page lets them track their order progress.</p> </p>
+        <p>5) The Order Status page allows students to track the progress of their current orders.</p>
+        <p>6) The Order History page shows past orders.</p>
+        <p>7) The Account page allows users to view their profile.</p>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
+
 
 
 

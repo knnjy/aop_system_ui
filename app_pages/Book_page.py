@@ -70,6 +70,15 @@ def show():
         book = st.session_state["selected_book"]
 
         st.markdown(f"<div class='book-title'>{book.get('title','Unknown')}</div>", unsafe_allow_html=True)
+
+        # --- Image ---
+        path = book.get("subject_code", None)
+        if path:
+            st.image(f"http://localhost:9000/static/images/books/{path}.jpg", width=200)
+        else:
+            st.markdown("<div class='book-img-placeholder'>📚</div>", unsafe_allow_html=True)
+
+        # --- Info Box ---
         st.markdown(f"""
             <div class='detail-box'>
                 <b>Price:</b> ₱{book.get('price','0')} <br>
@@ -78,24 +87,24 @@ def show():
             </div>
         """, unsafe_allow_html=True)
 
-        col1, col2 = st.columns([1,1])
+        # --- Horizontal Controls ---
+        col1, col2, col3 = st.columns([1,1,2])
         with col1:
-            if st.button("⬅️ Back to List"):
-                st.session_state["selected_book"] = None
+            st.button("⬅️ Back to List", on_click=lambda: st.session_state.update({"selected_book": None}))
         with col2:
-            if str(book.get("availability","")).lower() == "available":
-                if st.button("🛒 Add to Cart", key=f"detail_cart_{book.get('book_id','0')}"):
-                    if "cart_items" not in st.session_state:
-                        st.session_state["cart_items"] = []
-                    cart_item = {
-                        "id": book.get('book_id'),
-                        "title": book.get('title'),
-                        "price": float(book.get('price', 0) or 0),
-                        "info": book.get('program_related', ''),
-                        "quantity": 1
-                    }
-                    st.session_state["cart_items"].append(cart_item)
-                    st.success(f"Added {book.get('title','Unknown')} to cart!")
+            qty = st.number_input("", min_value=1, max_value=10, value=1, step=1,
+                                  label_visibility="collapsed",
+                                  key=f"detail_qty_{book.get('book_id','0')}")
+        with col3:
+            if st.button("🛒 Add to Cart", key=f"detail_cart_{book.get('book_id','0')}"):
+                st.session_state.setdefault("cart_items", []).append({
+                    "id": book.get('book_id'),
+                    "title": book.get('title'),
+                    "price": float(book.get('price', 0) or 0),
+                    "info": book.get('program_related', ''),
+                    "quantity": qty
+                })
+                st.success(f"Added {qty} x {book.get('title','Unknown')} to cart!")
         return
 
     # --- LIST VIEW (Filters + Grid) ---
@@ -135,6 +144,11 @@ def show():
             st.warning(f"Skipped a book due to invalid data: {e}")
             continue
 
+    # --- No Match ---
+    if not filtered_books:
+        st.warning("No books found for the selected filter.")
+        return
+
     # --- Grid Layout (2 cards per row) ---
     icons = {"ICS": "💻", "CEA": "📐", "CAS": "📖", "CBEA": "📊"}
     with book_col:
@@ -166,22 +180,20 @@ def show():
                             </div>
                         """, unsafe_allow_html=True)
 
-                        # --- Buttons (flat, no nesting) ---
+                        # --- Buttons ---
                         if st.button("🔎 View Details", key=f"view_{book.get('book_id',i+j)}"):
                             st.session_state["selected_book"] = book
+                            st.experimental_rerun()
                         if str(book.get("availability","")).lower() == "available":
                             if st.button("🛒 Add to Cart", key=f"cart_{book.get('book_id',i+j)}"):
-                                if "cart_items" not in st.session_state:
-                                    st.session_state["cart_items"] = []
-                                cart_item = {
+                                st.session_state.setdefault("cart_items", []).append({
                                     "id": book.get('book_id'),
                                     "title": book.get('title'),
                                     "price": float(book.get('price', 0) or 0),
                                     "info": book.get('program_related', ''),
                                     "quantity": 1
-                                }
-                                st.session_state["cart_items"].append(cart_item)
-                                st.success(f"Added {book.get('title','Unknown')} to cart!")
+                                })
+                                st.success(f"Added 1 x {book.get('title','Unknown')} to cart!")
 
                     except Exception as e:
                         st.warning(f"Skipped rendering a book card due to error: {e}")
