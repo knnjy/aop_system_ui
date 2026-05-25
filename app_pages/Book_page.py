@@ -85,9 +85,16 @@ def show():
         with col2:
             if str(book.get("availability","")).lower() == "available":
                 if st.button("🛒 Add to Cart", key=f"detail_cart_{book.get('book_id','0')}"):
-                    if "cart" not in st.session_state:
-                        st.session_state["cart"] = []
-                    st.session_state["cart"].append(book)
+                    if "cart_items" not in st.session_state:
+                        st.session_state["cart_items"] = []
+                    cart_item = {
+                        "id": book.get('book_id'),
+                        "title": book.get('title'),
+                        "price": float(book.get('price', 0) or 0),
+                        "info": book.get('program_related', ''),
+                        "quantity": 1
+                    }
+                    st.session_state["cart_items"].append(cart_item)
                     st.success(f"Added {book.get('title','Unknown')} to cart!")
         return
 
@@ -164,9 +171,16 @@ def show():
                             st.session_state["selected_book"] = book
                         if str(book.get("availability","")).lower() == "available":
                             if st.button("🛒 Add to Cart", key=f"cart_{book.get('book_id',i+j)}"):
-                                if "cart" not in st.session_state:
-                                    st.session_state["cart"] = []
-                                st.session_state["cart"].append(book)
+                                if "cart_items" not in st.session_state:
+                                    st.session_state["cart_items"] = []
+                                cart_item = {
+                                    "id": book.get('book_id'),
+                                    "title": book.get('title'),
+                                    "price": float(book.get('price', 0) or 0),
+                                    "info": book.get('program_related', ''),
+                                    "quantity": 1
+                                }
+                                st.session_state["cart_items"].append(cart_item)
                                 st.success(f"Added {book.get('title','Unknown')} to cart!")
 
                     except Exception as e:
