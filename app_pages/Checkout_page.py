@@ -21,11 +21,11 @@ def show():
             col1.markdown(f"**{item['title']}**")
             col2.markdown(f"<span style='   color:#6b7280;'>{item['info']}</span>", unsafe_allow_html=True)
             col3.markdown(f"₱{item['unit_price']:.2f}")
-            new_qty = col4.number_input("", min_value=1, value=item['quantity'], key=f"qty_{item['order_item_id']}", label_visibility="collapsed")
+            new_qty = col4.number_input("", min_value=1, value=item['quantity'], key=f"qty_{item['product_id']}", label_visibility="collapsed")
             item['quantity'] = new_qty
             col5.markdown(f"**₱{item['unit_price'] * item['quantity']:.2f}**")
-            if col6.button("🗑️", key=f"remove_{item['order_item_id']}"):
-                st.session_state.cart_items = [i for i in st.session_state.cart_items if i['id'] != item['id']]
+            if col6.button("🗑️", key=f"remove_{item['product_id']}"):
+                st.session_state.cart_items = [i for i in st.session_state.cart_items if i['product_id'] != item['product_id']]
                 st.rerun()
 
         # Total section
@@ -36,21 +36,33 @@ def show():
         with col3:
             if st.button("💳 Proceed to Check out", use_container_width=True, type="primary"):
                 # Create order from cart items
+                cart = st.session_state.cart_items
                 order_data = {
                     "user_id": st.session_state.user_id,
-                    "order_items": st.session_state.cart_items,
                     "total_amount": total,
-                    "status": "pending"
+                    "order_items": [
+                        {
+                            "product_id": item['product_id'],
+                            "unit_price": item['unit_price'],
+                            "quantity": item['quantity'],
+                            "subtotal": item['unit_price'] * item['quantity']
+                        }
+                        for item in cart
+                    ]
                 }
-                print(order_data)
-                result = order_client.add_order(order_data)
-                if result:
-                    st.success("Order placed successfully!")
-                    st.session_state.cart_items = []
-                    st.session_state.current_page = 'Order Status'
-                    st.rerun()
-                else:
-                    st.error("Failed to place order. Please try again.")
+
+                try:
+                    result = order_client.add_order(order_data)
+                    # Check if successful (200 status or result is truthy)
+                    if result is not None:
+                        st.success("Order placed successfully!")
+                        st.session_state.cart_items = []
+                        st.session_state.current_page = 'Order Status'
+                        st.rerun()
+                    else:
+                        st.error("Failed to place order. Please try again.")
+                except Exception as e:
+                    st.error(f"Error placing order: {str(e)}")
     else:
         st.info("Your cart is empty")
         col1, col2 = st.columns(2)

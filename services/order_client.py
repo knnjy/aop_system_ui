@@ -17,7 +17,7 @@ class OrderClient:
     def add_order(self, order_data: dict) -> Optional[Dict]:
         """User: Place new order"""
         response = self.client.post("/add-order", json=order_data, headers=self._get_headers())
-        if response.status_code == 201:
+        if response.status_code in (200, 201):
             return response.json()
         st.error("Failed to add order")
         return None
@@ -46,4 +46,8 @@ class OrderClient:
     def cancel_order(self, request_id: str) -> bool:
         """User: Cancel own order"""
         response = self.client.delete(f"/cancel-order/{request_id}", headers=self._get_headers())
+        return response.status_code == 200
+    
+    def get_product_item(self, product_item_id:str):
+        response = self.client.get(f"/get-product-item/{product_item_id}")
         return response.status_code == 200

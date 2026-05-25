@@ -66,3 +66,10 @@ class BookClient:
             return response.json()
         st.error("Failed to fetch stock info")
         return None
+    
+    def get_book(self, book_id: str):
+        response = self.client.get(f"/get-book/{book_id}")
+        if response.status_code == 200:
+            return response.json()
+        st.error("Failed to Book Info")
+        return None
