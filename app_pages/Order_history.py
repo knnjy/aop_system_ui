@@ -25,7 +25,7 @@ def show():
         .order-items{color:#334155;font-size:14px;line-height:1.8;}
         .order-total{color:#1e293b;font-weight:600;font-size:14px;}
         .badge-claimed{background-color:#dbeafe;color:#1e3a8a;padding:4px 12px;border-radius:20px;font-size:13px;font-weight:500;display:inline-block;}
-        .badge-not-claimed{background-color:#fef9c3;color:#ca8a04;padding:4px 12px;border-radius:20px;font-size:13px;font-weight:500;display:inline-block;}
+        .badge-cancelled{background-color:#fee2e2;color:#b91c1c;padding:4px 12px;border-radius:20px;font-size:13px;font-weight:500;display:inline-block;}
     </style>""", unsafe_allow_html=True)
 
     st.markdown("<div class='oh-title'>Order History</div>", unsafe_allow_html=True)
@@ -48,7 +48,7 @@ def show():
     with col_search:
         search_query = st.text_input("Search Orders", placeholder="🔍 Search by Order ID...", label_visibility="collapsed")
     with col_filter:
-        status_filter = st.selectbox("Filter Status", ["All Statuses", "claimed", "not claimed"], label_visibility="collapsed")
+        status_filter = st.selectbox("Filter Status", ["All Statuses", "claimed", "cancelled", "not claimed"], label_visibility="collapsed")
 
     filtered = user_orders[:]
 
@@ -57,8 +57,10 @@ def show():
 
     if status_filter == "claimed":
         filtered = [o for o in filtered if o.get("status", "").lower() == "claimed"]
+    elif status_filter == "cancelled":
+        filtered = [o for o in filtered if o.get("status", "").lower() == "cancelled"]
     elif status_filter == "not claimed":
-        filtered = [o for o in filtered if o.get("status", "").lower() != "claimed"]
+        filtered = [o for o in filtered if o.get("status", "").lower() not in {"claimed", "cancelled"}]
 
     st.markdown("<br>", unsafe_allow_html=True)
 
@@ -66,7 +68,9 @@ def show():
         s = status.lower()
         if s == "claimed":
             return "<span class='badge-claimed'>Claimed</span>"
-        return "<span class='badge-not-claimed'>Not Claimed</span>"
+        if s == "cancelled":
+            return "<span class='badge-cancelled'>Cancelled</span>"
+        return ""
 
     rows_html = ""
     for order in filtered:
@@ -103,8 +107,8 @@ def show():
     st.markdown("<br><br>", unsafe_allow_html=True)
 
     total_orders = len(user_orders)
-    claimed = len([o for o in user_orders if isinstance(o, dict) and o.get("status","").lower() == "claimed"])
-    not_claimed = total_orders - claimed
+    claimed = len([o for o in user_orders if isinstance(o, dict) and o.get("status", "").lower() == "claimed"])
+    cancelled = len([o for o in user_orders if isinstance(o, dict) and o.get("status", "").lower() == "cancelled"])
 
     c1, c2, c3 = st.columns(3)
 
@@ -118,7 +122,7 @@ def show():
 
     stat_card(c1, "Total Orders", total_orders, "#1e3a8a")
     stat_card(c2, "Claimed",      claimed,      "#1d4ed8")
-    stat_card(c3, "Not Claimed",  not_claimed,  "#fbbf24")
+    stat_card(c3, "Cancelled",    cancelled,    "#fbbf24")
 
     st.markdown("<br>", unsafe_allow_html=True)
     if st.button("← Back to Order Status", key="back_to_order_status"):
