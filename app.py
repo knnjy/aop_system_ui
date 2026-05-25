@@ -1,6 +1,6 @@
 import streamlit as st
 
-st.set_page_config(layout="wide")
+st.set_page_config(page_title="Student Portal Login", layout="centered")
 
 from app_pages.admin_pages import admin_books, admin_home, admin_order_history, admin_order_request, admin_uniform
 from components.navbar import admin_navbar, navbar

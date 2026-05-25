@@ -2,6 +2,7 @@ import streamlit as st
 from services.auth_client import AuthClient
 
 login_client = AuthClient()
+st.set_page_config(page_title="Student Portal Login", layout="wide")
 
 # Custom CSS
 st.markdown("""
@@ -16,6 +17,9 @@ st.markdown("""
         padding-top: 1rem !important;
         padding-bottom: 2rem !important;
         background-color: #ffffff !important;
+        display: flex;
+        justify-content: center;
+        align-items: center;
     }
 
     /* Forgot password */
