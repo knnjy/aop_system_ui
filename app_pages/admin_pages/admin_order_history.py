@@ -64,6 +64,50 @@ def show():
 
     st.markdown("<br>", unsafe_allow_html=True)
 
+    # --- Sort newest first and add pagination ---
+    def _parse_date(d):
+        try:
+            return datetime.fromisoformat(str(d))
+        except:
+            return datetime.min
+
+    filtered.sort(key=lambda o: _parse_date(o.get("date_created")), reverse=True)
+
+    if "order_history_page" not in st.session_state:
+        st.session_state["order_history_page"] = 1
+
+    PAGE_SIZE = 10
+    total_items = len(filtered)
+    total_pages = (total_items + PAGE_SIZE - 1) // PAGE_SIZE if total_items > 0 else 1
+
+    # clamp page
+    if st.session_state["order_history_page"] > total_pages:
+        st.session_state["order_history_page"] = total_pages
+    if st.session_state["order_history_page"] < 1:
+        st.session_state["order_history_page"] = 1
+
+    page = st.session_state["order_history_page"]
+    start_idx = (page - 1) * PAGE_SIZE
+    end_idx = start_idx + PAGE_SIZE
+    displayed_orders = filtered[start_idx:end_idx]
+
+    # Pagination controls
+    col_prev, col_mid, col_next = st.columns([1, 2, 1])
+    with col_prev:
+        if st.button("← Previous", key="oh_prev"):
+            if st.session_state["order_history_page"] > 1:
+                st.session_state["order_history_page"] -= 1
+                st.rerun()
+    with col_mid:
+        show_from = start_idx + 1 if total_items > 0 else 0
+        show_to = min(end_idx, total_items)
+        st.markdown(f"<div style='text-align:center;font-size:13px;color:#475569;'>Page {page} of {total_pages} — Showing {show_from}–{show_to} of {total_items}</div>", unsafe_allow_html=True)
+    with col_next:
+        if st.button("Next →", key="oh_next"):
+            if st.session_state["order_history_page"] < total_pages:
+                st.session_state["order_history_page"] += 1
+                st.rerun()
+
     def get_badge(status):
         s = str(status or "").lower()
         if s in ["approved", "approve"]: return "<span class='badge-approved'>Approved</span>"
@@ -72,7 +116,7 @@ def show():
         return "<span class='badge-pending'>Pending</span>"
 
     rows_html = ""
-    for order in filtered:
+    for order in displayed_orders:
         items = order.get("order_item_ids", [])
         items_html = "<br>".join([f"• {item}" for item in items]) if items else "—"
         rows_html += f"""

@@ -1,4 +1,3 @@
-
 import streamlit as st
 from services.uniform_client import UniformClient
 
@@ -9,9 +8,8 @@ def show():
         <style>
         .stApp { background-color: white; }
         .uniform-title { font-size:28px; font-weight:700; color:#1e3a8a; margin-bottom:20px; }
-        .uniform-card { background-color: #f8fafc; border-radius: 12px; border: 1px solid #e2e8f0; margin-bottom: 15px; overflow: hidden; box-shadow: 0 2px 8px rgba(0,0,0,0.05); }
-        .uniform-img-placeholder { background-color: #e2e8f0; width: 100%; height: 200px; display: flex; align-items: center; justify-content: center; font-size: 48px; }
-        .uniform-info { padding: 12px; }
+        .uniform-card { background-color: #f8fafc; border-radius: 12px; border: 1px solid #e2e8f0; margin-bottom: 15px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); padding: 10px; }
+        .uniform-info { padding: 8px 0px; }
         .uniform-name { font-size:15px; font-weight:700; color:#1e3a8a; }
         .uniform-price { font-size:14px; color:#d97706; font-weight:600; margin-top:4px; }
         .uniform-type { font-size:12px; color:#64748b; margin-top:2px; }
@@ -38,8 +36,6 @@ def show():
     if "uniform_cart_mode" not in st.session_state:
         st.session_state["uniform_cart_mode"] = False
 
-    icons = {"Essentials": "👔", "PE": "🏃"}
-
     def parse_price(value):
         try:
             return float(value or 0)
@@ -58,12 +54,22 @@ def show():
 
     selected_uniform = st.session_state.get("selected_uniform")
 
+    # =========================
+    # CART MODE - Size Selection
+    # =========================
     if st.session_state.get("uniform_cart_mode") and selected_uniform:
         uniform = selected_uniform
-        
+        product_id = uniform.get('product_id', '')
         total_stock = sum([s.get("product_stock", 0) for s in uniform.get("sizes", [])])
-        key_base = f"detail_{uniform.get('product_id', 0)}"
+        key_base = f"detail_{product_id}"
         selected_size = st.session_state.get("selected_uniform_size", None)
+
+        img_url = f"http://localhost:9000/static/images/uniforms/{product_id}.jpg"
+        st.markdown(f"""
+            <div style='width:100%;height:350px;display:flex;align-items:center;justify-content:center;background:#f8fafc;border-radius:12px;overflow:hidden;margin-bottom:15px;'>
+                <img src='{img_url}' style='max-width:100%;max-height:350px;object-fit:contain;' onerror="this.parentElement.innerHTML='<div style=\\'font-size:64px;\\'>👕</div>';">
+            </div>
+        """, unsafe_allow_html=True)
 
         st.markdown(f"<div class='uniform-title'>{uniform.get('product_name', 'Unknown')}</div>", unsafe_allow_html=True)
         st.markdown(f"""
@@ -99,10 +105,9 @@ def show():
                 st.session_state["selected_uniform_size"] = None
                 st.rerun()
         with col2:
-            if st.button("Add to Cart", key=f"confirm_cart_{uniform.get('product_id', 0)}", disabled=not selected_size):
+            if st.button("Add to Cart", key=f"confirm_cart_{product_id}", disabled=not selected_size):
                 if "cart_items" not in st.session_state:
                     st.session_state["cart_items"] = []
-                # Find the size_info that matches selected_size
                 size_info = next((s for s in uniform.get("sizes", []) if s.get("size") == selected_size), {})
                 cart_item = {
                     "id": size_info.get("uniform_size_id"),
@@ -121,9 +126,20 @@ def show():
                 st.rerun()
         return
 
+    # =========================
+    # DETAIL VIEW
+    # =========================
     if selected_uniform:
         uniform = selected_uniform
+        product_id = uniform.get('product_id', '')
         total_stock = sum([s.get("product_stock", 0) for s in uniform.get("sizes", [])])
+
+        img_url = f"http://localhost:9000/static/images/uniforms/{product_id}.jpg"
+        st.markdown(f"""
+            <div style='width:100%;height:350px;display:flex;align-items:center;justify-content:center;background:#f8fafc;border-radius:12px;overflow:hidden;margin-bottom:15px;'>
+                <img src='{img_url}' style='max-width:100%;max-height:350px;object-fit:contain;' onerror="this.parentElement.innerHTML='<div style=\\'font-size:64px;\\'>👕</div>';">
+            </div>
+        """, unsafe_allow_html=True)
 
         size_lines = []
         for size in uniform.get('sizes', []):
@@ -158,12 +174,15 @@ def show():
                 st.rerun()
         with col2:
             if total_stock > 0:
-                if st.button("Add to Cart", key=f"detail_cart_{uniform.get('product_id', 0)}"):
+                if st.button("Add to Cart", key=f"detail_cart_{product_id}"):
                     st.session_state["uniform_cart_mode"] = True
                     st.session_state["selected_uniform_size"] = None
                     st.rerun()
         return
 
+    # =========================
+    # FILTERS
+    # =========================
     categories = sorted({u.get("uniform_type", "Other") or "Other" for u in uniforms})
     price_ranges = [
         ("All Prices", None),
@@ -182,6 +201,9 @@ def show():
 
     selected_price_range = dict(price_ranges)[price_filter]
 
+    # =========================
+    # APPLY FILTERS
+    # =========================
     filtered = []
     for uniform in uniforms:
         name = str(uniform.get("product_name", "") or "")
@@ -199,6 +221,9 @@ def show():
             continue
         filtered.append(uniform)
 
+    # =========================
+    # LIST VIEW
+    # =========================
     with list_col:
         if not filtered:
             st.warning("No uniforms match your search or filter settings.")
@@ -207,18 +232,23 @@ def show():
         cols = st.columns(2)
         for i, uniform in enumerate(filtered):
             with cols[i % 2]:
-                icon = icons.get(uniform.get("uniform_type", ""), "👕")
                 total_stock = sum([s.get("product_stock", 0) for s in uniform.get("sizes", [])])
                 product_id = uniform.get("product_id", i)
                 product_key = str(product_id)
+                img_url = f"http://localhost:9000/static/images/uniforms/{product_id}.jpg"
 
                 st.markdown(f"""
-                    <div class='uniform-card'>
-                        <div class='uniform-img-placeholder'>{icon}</div>
+                    <div style='width:100%;height:250px;display:flex;align-items:center;justify-content:center;background:#f8fafc;border-radius:12px 12px 0 0;overflow:hidden;'>
+                        <img src='{img_url}' style='max-width:100%;max-height:250px;object-fit:contain;' onerror="this.parentElement.innerHTML='<div style=\\'font-size:48px;\\'>👕</div>';">
+                    </div>
+                """, unsafe_allow_html=True)
+
+                st.markdown(f"""
+                    <div class='uniform-card' style='border-radius:0 0 12px 12px;'>
                         <div class='uniform-info'>
                             <div class='uniform-name'>{uniform.get('product_name', 'Unknown')}</div>
                             <div class='uniform-type'>{uniform.get('uniform_type', '')} | Stock: {total_stock}</div>
-                            <div class='uniform-price'>{uniform.get('price', '0')}</div>
+                            <div class='uniform-price'>₱{uniform.get('price', '0')}</div>
                         </div>
                     </div>
                 """, unsafe_allow_html=True)
