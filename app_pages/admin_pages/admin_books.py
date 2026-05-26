@@ -35,87 +35,7 @@ def btn():
     # Render as HTML so global button styles don't interfere
     st.markdown("<button class='round-button'>➕</button>", unsafe_allow_html=True)
 
-def add_new():
 
-    st.markdown(
-        """
-        <h1 style='color:#1e3a8a;'>
-            Admin Book Management
-        </h1>
-        """,
-        unsafe_allow_html=True
-    )
-
-    book_client = BookClient()
-
-    # Initialize toggle state
-    if "show_add_form" not in st.session_state:
-        st.session_state.show_add_form = False
-
-    # Button to toggle form visibility
-    if st.button("Add Book"):
-        st.session_state.show_add_form = not st.session_state.show_add_form
-
-    # Conditionally show the form
-    if st.session_state.show_add_form:
-
-        st.markdown("### Add New Book")
-
-        with st.form("add_book_form"):
-
-            subject_code = st.text_input("Subject Code", key="subject_code")
-            title = st.text_input("Book Title", key="title")
-            price = st.number_input("Price", min_value=0.0, key="price")
-            stock_quantity = st.number_input("Stock Quantity", min_value=0, step=1, key="stock_quantity")
-            program_related = st.text_input("Program Related", key="program_related")
-            semester_available = st.number_input(
-                "Semester Available",
-                min_value=1,
-                max_value=4,
-                step=1,
-                key="semester_available"
-            )
-            image_file = st.file_uploader("Upload Book Image", type=["jpg"])
-
-            submitted = st.form_submit_button("Add Book")
-
-            if submitted:
-
-                if not subject_code or not title or price <= 0 or stock_quantity <= 0:
-                    st.error("Please complete all required fields.")
-                    return
-
-                if image_file:
-                    filename_no_ext = image_file.name.split(".")[0]
-
-                    if filename_no_ext != subject_code:
-                        st.error(
-                            f"Image filename must match subject code ({subject_code})"
-                        )
-                        return
-
-                    uploaded = book_client.book_upload_image(image_file)
-
-                    if not uploaded:
-                        st.error("Image upload failed")
-                        return
-
-                book_data = {
-                    "subject_code": subject_code,
-                    "title": title,
-                    "price": price,
-                    "stock_quantity": stock_quantity,
-                    "semester_available": semester_available,
-                    "program_related": program_related
-                }
-
-                success = book_client.add_book(book_data)
-
-                if success:
-                    st.success("Book added successfully!")
-                    st.rerun()
-                else:
-                    st.error("Failed to add book.")
 
 
 def show():
@@ -192,7 +112,7 @@ def show():
 
     with top_col2:
         # Only render the button here
-        if st.button("➕ Add Uniform", key="add_uniform_btn", use_container_width=True):
+        if st.button("➕ Add Book", key="add_uniform_btn", use_container_width=True):
             st.session_state.show_add_form = not st.session_state.get("show_add_form", False)
 
     # --- New line after the columns ---

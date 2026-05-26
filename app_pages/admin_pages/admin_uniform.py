@@ -2,6 +2,25 @@ from components.add_uniform import add_uniform_form
 import streamlit as st
 from services.uniform_client import UniformClient
 
+def select_uniform(product_id, edit_mode=False):
+    st.session_state["admin_selected_uniform_id"] = product_id
+    st.session_state["admin_edit_mode"] = edit_mode
+
+def parse_price(value):
+    try:
+        return float(value or 0)
+    except Exception:
+        return 0.0
+
+def in_price_range(price_value, price_range):
+    if price_range is None:
+        return True
+    low, high = price_range
+    if low is not None and price_value < low:
+        return False
+    if high is not None and price_value > high:
+        return False
+    return True
 
 def show():
     uniform_client = UniformClient()
@@ -16,7 +35,6 @@ def show():
         .uniform-price { font-size:14px; color:#d97706; font-weight:600; margin-top:4px; }
         .uniform-type { font-size:12px; color:#64748b; margin-top:2px; }
         .detail-box { background-color: #fefce8; border: 1px solid #facc15; border-radius: 10px; padding: 15px; margin-bottom: 20px; }
-        .admin-action-note { margin-top: 12px; font-size: 13px; color: #475569; }
         </style>
     """, unsafe_allow_html=True)
 
@@ -30,27 +48,8 @@ def show():
 
     st.session_state.setdefault("admin_selected_uniform_id", None)
     st.session_state.setdefault("admin_edit_mode", False)
-    st.session_state.setdefault("admin_hidden_uniform_ids", [])
-    st.session_state.setdefault("admin_uniform_action_product", None) 
 
-    def select_uniform(product_id, edit_mode=False):
-        st.session_state["admin_selected_uniform_id"] = product_id
-        st.session_state["admin_edit_mode"] = edit_mode
-        st.session_state["admin_uniform_action_product"] = None
 
-    def hide_uniform(product_id):
-        hidden_ids = set(str(pid) for pid in st.session_state["admin_hidden_uniform_ids"])
-        hidden_ids.add(str(product_id))
-        st.session_state["admin_hidden_uniform_ids"] = list(hidden_ids)
-        st.success("Product hidden from user view.")
-
-    def restore_uniform(product_id):
-        hidden_ids = set(str(pid) for pid in st.session_state["admin_hidden_uniform_ids"])
-        hidden_ids.discard(str(product_id))
-        st.session_state["admin_hidden_uniform_ids"] = list(hidden_ids)
-        st.success("Product restored to visible list.")
-
-    ## SEARCH BAR & ADD BUTTON
     top_col1, top_col2 = st.columns([4, 1])
     with top_col1:
         search_query = st.text_input(
@@ -82,33 +81,14 @@ def show():
         ("1000+", (1000, None)),
     ]
 
-    fcol1, fcol2, fcol3, fcol4 = st.columns([1, 1, 1, 1])
+    fcol1, fcol2, fcol3 = st.columns([1, 1, 1])
     with fcol1:
         availability_filter = st.selectbox("Availability", ["All", "In Stock", "Out of Stock"], key="admin_availability_filter", label_visibility="collapsed")
     with fcol2:
-        hidden_filter = st.selectbox("Show", ["All", "Visible only", "Hidden only"], key="admin_hidden_filter", label_visibility="collapsed")
-    with fcol3:
         category_filter = st.selectbox("Category", ["All"] + categories, key="admin_category_filter", label_visibility="collapsed")
-    with fcol4:
+    with fcol3:
         price_filter = st.selectbox("Price range", [p[0] for p in price_ranges], key="admin_price_filter", label_visibility="collapsed")
 
-    def parse_price(value):
-        try:
-            return float(value or 0)
-        except Exception:
-            return 0.0
-
-    def in_price_range(price_value, price_range):
-        if price_range is None:
-            return True
-        low, high = price_range
-        if low is not None and price_value < low:
-            return False
-        if high is not None and price_value > high:
-            return False
-        return True
-
-    hidden_ids = set(str(pid) for pid in st.session_state["admin_hidden_uniform_ids"])
     selected_price_range = dict(price_ranges)[price_filter]
 
     def _matches_filters(u):
@@ -126,9 +106,8 @@ def show():
         if not in_price_range(price, selected_price_range):
             return False
         return True
-
-    visible_uniforms = [u for u in uniforms if str(u.get("product_id", "")) not in hidden_ids and _matches_filters(u)]
-    hidden_uniforms = [u for u in uniforms if str(u.get("product_id", "")) in hidden_ids and _matches_filters(u)]
+    
+    rows = [u for u in uniforms if _matches_filters(u)]
 
     selected_uniform_id = st.session_state["admin_selected_uniform_id"]
     selected_uniform = None
@@ -159,25 +138,40 @@ def show():
         """, unsafe_allow_html=True)
 
         with st.form("admin_uniform_edit_form"):
+            product_name = st.text_input("Product Name",value=selected_uniform.get("product_name", ""))
+            uniform_type = st.text_input("Uniform Type",value=selected_uniform.get("uniform_type", ""))
             price = st.number_input("Price", min_value=0.0, value=float(selected_uniform.get("price", 0)), format="%.2f")
+            
             st.markdown("<div class='detail-box'><strong>Size stock details</strong></div>", unsafe_allow_html=True)
+            
             updated_sizes = []
+            
             for idx, size_info in enumerate(selected_uniform.get("sizes", [])):
                 size_label = size_info.get("size", "N/A")
                 stock_value = int(size_info.get("product_stock", 0))
                 new_stock = st.number_input(f"Stock for {size_label}", min_value=0, value=stock_value, step=1, key=f"admin_stock_{selected_uniform_id}_{idx}")
-                updated_sizes.append({"size": size_label, "product_stock": new_stock})
+                uniform_size_id = size_info.get("uniform_size_id","")
+
+                updated_sizes.append({  "uniform_size_id": uniform_size_id,"product_stock": new_stock})
 
             save_changes = st.form_submit_button("Save Changes")
             cancel_edit = st.form_submit_button("Cancel")
 
             if save_changes:
-                update_data = {"price": price, "sizes": updated_sizes}
+                update_data = {
+                    "updates": {
+                        "product_name": product_name,
+                        "price": price,
+                        "uniform_type": uniform_type,
+                    },
+                    "size_updates": updated_sizes
+                }
                 success = uniform_client.update_uniform(str(selected_uniform.get("product_id", "")), update_data)
                 if success:
-                    st.success("Uniform updated successfully.")
+                    st.session_state["toast_message"] = "Uniform updated successfully."
                 else:
-                    st.error("Failed to update uniform.")
+                    st.session_state["toast_message"] = "Failed to update uniform."
+
                 st.session_state["admin_edit_mode"] = False
                 st.session_state["admin_selected_uniform_id"] = None
                 st.rerun()
@@ -187,7 +181,6 @@ def show():
                 st.session_state["admin_selected_uniform_id"] = None
                 st.rerun()
 
-        st.button("Hide Product", key="admin_hide_in_edit", on_click=hide_uniform, args=(selected_uniform.get("product_id", ""),))
         st.stop()  # Stop further rendering to keep focus on edit form
 
     # =========================
@@ -238,27 +231,29 @@ def show():
                 st.rerun()
         with col3:
             if st.button("Delete", key="admin_detail_delete"):
-                hide_uniform(selected_uniform.get("product_id", ""))
+                success = uniform_client.delete_uniform(
+                    product_id=selected_uniform.get("product_id", "")
+                )
+                if success:
+                    st.success("Uniform deleted successfully.")
+                else:
+                    st.error("Failed to delete uniform.")
+
                 st.session_state["admin_selected_uniform_id"] = None
                 st.rerun()
         st.stop()  # Stop further rendering to keep focus on detail view
 
-
+    # At the top of your list view
+    if "toast_message" in st.session_state:
+        st.toast(st.session_state["toast_message"])
+        del st.session_state["toast_message"]  # clear after showing
     # =========================
     # LIST VIEW
     # =========================
-    if hidden_filter == "All":
-        rows = visible_uniforms + hidden_uniforms
-    elif hidden_filter == "Visible only":
-        rows = visible_uniforms
-    else:
-        rows = hidden_uniforms
-
     if not rows:
         st.warning("No uniforms found for the selected filters.")
         st.stop()  # Stop further rendering
 
-    # Use rows of 2 to allow st.columns inside without 3-level nesting
     for row_start in range(0, len(rows), 2):
         row_items = rows[row_start:row_start + 2]
         card_cols = st.columns(len(row_items))
@@ -267,18 +262,16 @@ def show():
             with card_cols[col_idx]:
                 total_stock = sum(int(s.get("product_stock", 0)) for s in uniform.get("sizes", []))
                 product_id = uniform.get("product_id", "")
-                is_hidden = str(product_id) in hidden_ids
                 img_url = f"http://localhost:9000/static/images/uniforms/{product_id}.jpg"
-                opacity = "opacity:0.55;" if is_hidden else ""
 
                 st.markdown(f"""
-                    <div style='width:100%;height:250px;display:flex;align-items:center;justify-content:center;background:#f8fafc;border-radius:12px 12px 0 0;overflow:hidden;{opacity}'>
+                    <div style='width:100%;height:250px;display:flex;align-items:center;justify-content:center;background:#f8fafc;border-radius:12px 12px 0 0;overflow:hidden;'>
                         <img src='{img_url}' style='max-width:100%;max-height:250px;object-fit:contain;' onerror="this.parentElement.innerHTML='<div style=\\'font-size:48px;\\'>👕</div>';">
                     </div>
                 """, unsafe_allow_html=True)
 
                 st.markdown(f"""
-                    <div class='uniform-card' style='{opacity}'>
+                    <div class='uniform-card'>
                         <div class='uniform-info'>
                             <div class='uniform-name'>{uniform.get('product_name', 'Unknown')}</div>
                             <div class='uniform-type'>{uniform.get('uniform_type', '')} | Stock: {total_stock}</div>
@@ -287,8 +280,6 @@ def show():
                     </div>
                 """, unsafe_allow_html=True)
 
-                if is_hidden:
-                    st.markdown("<span style='background:#64748b;color:white;border-radius:10px;padding:4px 10px;font-size:12px;'>Hidden</span>", unsafe_allow_html=True)
 
                 # View Details + ⋮ side by side (level 2 columns)
                 btn_col1, btn_col2 = st.columns([5, 1])
@@ -301,19 +292,12 @@ def show():
                         if st.button("✏️ Edit", key=f"admin_edit_{product_id}", use_container_width=True):
                             select_uniform(product_id, True)
                             st.rerun()
-                        if is_hidden:
-                            if st.button("🔁 Restore", key=f"admin_restore_{product_id}", use_container_width=True):
-                                restore_uniform(product_id)
-                                st.rerun()
-                        else:
-                            if st.button("🗑️ Archive", key=f"admin_delete_{product_id}", use_container_width=True):
-                                success = uniform_client.delete_uniform(product_id=product_id)
-                                if success:
-                                    st.session_state["archive_success"] = f"Archived '{product_id}' successfully!"
-                                    st.rerun()
-                                else:
-                                    st.session_state["archive_error"] = "❌ Failed to archive book."
-                                    st.rerun()
 
-    if hidden_uniforms:
-        st.markdown("<p class='admin-action-note'>Hidden uniforms are shown at the bottom and remain available for admin review.</p>", unsafe_allow_html=True)
+                        if st.button("🗑️ Archive", key=f"admin_delete_{product_id}", use_container_width=True):
+                            success = uniform_client.delete_uniform(product_id=product_id)
+
+                            if success:
+                                st.session_state["toast_message"] = "Uniform Archieved successfully."
+                                st.rerun()
+                            else:
+                                st.session_state["toast_message"] = "Failed to successfully."
