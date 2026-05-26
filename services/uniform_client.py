@@ -27,9 +27,12 @@ class UniformClient:
         st.error("Failed to fetch uniforms")
         return None
 
-    def add_uniform(self, uniform_data: dict) -> bool:
+    def add_uniform(self, uniform_data: dict) -> Optional[Dict]:
         response = self.client.post("/add-uniform", json=uniform_data, headers=self._get_headers())
-        return response.status_code in (200, 201)
+        if response.status_code in (200, 201):
+            return response.json()
+        st.error("Failed to add uniform")
+        return None
 
     def update_uniform(self, uniform_code: str, update_data: dict) -> bool:
         response = self.client.put(f"/update-uniform/{uniform_code}", json=update_data, headers=self._get_headers())
