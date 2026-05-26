@@ -57,3 +57,19 @@ class UniformClient:
     def get_stocks(self):
         response = self.client.get("/get-uniform-stocks", headers=self._get_headers())
         return response.json()
+    
+    def uniform_upload_image(self, image_file) -> Optional[str]:
+        """
+        Upload an image to FastAPI static/images.
+        Returns the image URL if successful.
+        """
+        files = {"file": (image_file.name, image_file, image_file.type)}
+        response = self.client.post(
+            "/upload-image/",
+            files=files,
+            headers=self._get_headers()
+        )
+        if response.status_code == 200:
+            return response.json().get("image_url")
+        st.error("Failed to upload image")
+        return None
