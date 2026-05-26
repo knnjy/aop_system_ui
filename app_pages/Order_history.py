@@ -135,14 +135,14 @@ def show():
         if st.button("← Previous", key="order_history_prev"):
             if st.session_state["order_history_page"] > 1:
                 st.session_state["order_history_page"] -= 1
-                st.experimental_rerun()
+                st.rerun()
     with info_col:
         st.markdown(f"<div style='text-align:center;color:#475569;'>Page {current_page} of {total_pages} — Showing {min(start_idx+1, total_items)} to {min(end_idx, total_items)} of {total_items}</div>", unsafe_allow_html=True)
     with next_col:
         if st.button("Next →", key="order_history_next"):
             if st.session_state["order_history_page"] < total_pages:
                 st.session_state["order_history_page"] += 1
-                st.experimental_rerun()
+                st.rerun()
 
     st.markdown("<br><br>", unsafe_allow_html=True)
 

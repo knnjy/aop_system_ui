@@ -18,40 +18,49 @@ def show():
     # =========================
     # ADD NEW BOOK FORM
     # =========================
+    # Initialize toggle state
+    if "show_add_form" not in st.session_state:
+        st.session_state.show_add_form = False
 
-    st.markdown("### Add New Book")
+    # Button to toggle form visibility
+    if st.button("➕ Add Book"):
+        st.session_state.show_add_form = not st.session_state.show_add_form
 
-    with st.form("add_book_form"):
+    # Conditionally show the form
+    if st.session_state.show_add_form:
+        st.markdown("### Add New Book")
 
-        subject_code = st.text_input("Subject Code")
-        title = st.text_input("Book Title")
-        price = st.number_input("Price", min_value=0.0)
-        stock_quantity = st.number_input("Stock Quantity", min_value=0, step=1)
-        program_related = st.text_input("Program Related")
-        semester_available = st.number_input(
-            "Semester Available",
-            min_value=1,
-            max_value=4,
-            step=1
-        )
+        with st.form("add_book_form"):
 
-        submitted = st.form_submit_button("Add Book")
+            subject_code = st.text_input("Subject Code")
+            title = st.text_input("Book Title")
+            price = st.number_input("Price", min_value=0.0)
+            stock_quantity = st.number_input("Stock Quantity", min_value=0, step=1)
+            program_related = st.text_input("Program Related")
+            semester_available = st.number_input(
+                "Semester Available",
+                min_value=1,
+                max_value=4,
+                step=1
+            )
 
-        if submitted:
+            submitted = st.form_submit_button("Add Book")
 
-            book_data = {
-                "subject_code": subject_code,
-                "title": title,
-                "price": price,
-                "stock_quantity": stock_quantity,
-                "semester_available": semester_available,
-                "program_related": program_related
-            }
+            if submitted:
 
-            success = book_client.add_book(book_data)
+                book_data = {
+                    "subject_code": subject_code,
+                    "title": title,
+                    "price": price,
+                    "stock_quantity": stock_quantity,
+                    "semester_available": semester_available,
+                    "program_related": program_related
+                }
 
-            if success:
-                st.success("Book added successfully!")
-            else:
-                st.error("Failed to add book.")
+                success = book_client.add_book(book_data)
+
+                if success:
+                    st.success("Book added successfully!")
+                else:
+                    st.error("Failed to add book.")
 
