@@ -2,9 +2,8 @@ import streamlit as st
 from services import book_client
 from services.book_client import BookClient
 
-
 def show_add_book(book_client):
-    
+
     if "show_add_form" not in st.session_state:
         st.session_state.show_add_form = False
 

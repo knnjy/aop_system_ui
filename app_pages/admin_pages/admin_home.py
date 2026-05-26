@@ -104,3 +104,6 @@ def show():
     ).properties(width=600, height=400)
 
     st.altair_chart(chart, use_container_width=True)
+
+    st.write("Sales")
+    
