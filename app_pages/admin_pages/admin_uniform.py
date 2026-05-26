@@ -306,13 +306,14 @@ def show():
                                 restore_uniform(product_id)
                                 st.rerun()
                         else:
-                            if st.button("🗑️ Delete", key=f"admin_delete_{product_id}", use_container_width=True):
-                                hide_uniform(product_id)
-                                st.rerun()
+                            if st.button("🗑️ Archive", key=f"admin_delete_{product_id}", use_container_width=True):
+                                success = uniform_client.delete_uniform(product_id=product_id)
+                                if success:
+                                    st.session_state["archive_success"] = f"Archived '{product_id}' successfully!"
+                                    st.rerun()
+                                else:
+                                    st.session_state["archive_error"] = "❌ Failed to archive book."
+                                    st.rerun()
 
     if hidden_uniforms:
         st.markdown("<p class='admin-action-note'>Hidden uniforms are shown at the bottom and remain available for admin review.</p>", unsafe_allow_html=True)
-
-
-if __name__ == "__main__":
-    show()
