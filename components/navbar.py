@@ -44,9 +44,8 @@ hide_default_menu = """
     """
 
 def navbar():
-    # Hide default sidebar menu
-   
-    st.markdown(hide_default_menu, unsafe_allow_html=True)
+    user = st.session_state.user_data
+    # st.markdown(hide_default_menu, unsafe_allow_html=True)
 
     menu_options = [
         "Home", "Books", "Uniforms",
@@ -69,20 +68,72 @@ def navbar():
     except ValueError:
         default_index = 0
 
-    col1, col2 = st.columns([8, 1])
-    with col1:
+    st.markdown(
+        """
+        <style>
+        [data-testid="stSidebar"] {
+            background-color: #1e3a8a !important;  /* full blue background */
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        }
+        .profile-container {
+            text-align: center;
+            padding: 20px 10px;
+            color: white;
+        }
+        .profile-pic {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            margin-bottom: 10px;
+            border: 2px solid white;
+            object-fit: cover;
+        }
+        .logout-container {
+            margin-top: auto;
+            padding: 10px;
+        }
+        /* Style the logout button */
+        .stButton>button {
+            background-color: #1e3a8a;
+            color: white;
+            border-radius: 8px;
+            border: 1px solid white;
+            font-weight: 600;
+            width: 100%;
+        }
+        .stButton>button:hover {
+            background-color: #fbbf24;  /* yellow hover */
+            color: #1e3a8a;
+        }
+        </style>
+        """,
+        unsafe_allow_html=True
+    )
+    with st.sidebar:
+        st.markdown(
+            f"""
+            <div class="profile-container">
+                <img src="https://cdn-icons-png.flaticon.com/512/847/847969.png" class="profile-pic">
+                <h4>{user.get("name")}</h4>
+                <p>{user.get("student_id")}</p>
+            </div>
+            """,
+            unsafe_allow_html=True
+        )
         selected = option_menu(
             menu_title=None,
             options=menu_options,
             icons=menu_icons,
-            orientation="horizontal",
+            # orientation="horizontal",
             default_index=default_index,
             key="navbar_menu",
             styles={
             "container": {
                 "background-color": "#1e3a8a",
                 "padding": "8px 0",
-                "border-radius": "10px",
+                "border-radius": "0px",
             },
             "icon": {
                 "color": "white",
@@ -94,7 +145,7 @@ def navbar():
                 "text-align": "center",
                 "margin": "0 4px",
                 "padding": "10px 16px",
-                "border-radius": "8px",
+                "border-radius": "0px",
                 "font-weight": "500",
             },
             "nav-link-selected": {
@@ -102,82 +153,25 @@ def navbar():
                 "color": "#1e3a8a",
                 "font-weight": "700",
                 "box-shadow": "0 4px 8px rgba(251, 191, 36, 0.3)",
+                "border-radius": "0px",
             },
         }
         )
-    with col2:
-        if st.button("🚪 Logout", use_container_width=True):
+        st.sidebar.markdown("---")  # separator line
+        st.markdown('<div class="logout-container">', unsafe_allow_html=True)
+        if st.sidebar.button("🚪 Logout", use_container_width=True):
             st.session_state.logged_in = False
             st.session_state.current_page = "Home"
             st.rerun()
-        
-        # If the selected page is different from current page, update and rerun
-        if selected != st.session_state.current_page:
-            st.session_state.current_page = selected
-            st.rerun()
-        
+        st.markdown('</div>', unsafe_allow_html=True)
+
         return selected
 
 
 def admin_navbar():
     user = st.session_state.user_data
-    
 
-    st.markdown(hide_default_menu, unsafe_allow_html=True)
-    st.markdown(
-    """
-    <style>
-    [data-testid="stSidebar"][aria-expanded="true"] > div:first-child {
-        width: 250px;
-    }
-    [data-testid="stSidebar"][aria-expanded="false"] > div:first-child {
-        width: 350px;
-        margin-left: -350px;
-    }
-    </style>
-    """,
-    unsafe_allow_html=True
-)
-    st.sidebar.markdown(
-        """
-        <style>
-        .sidebar-profile {
-            text-align: center;
-            padding: 20px 10px;
-            background-color: #1e3a8a;
-            border-radius: 10px;
-            margin-bottom: 20px;
-            color: white;
-        }
-        .sidebar-profile img {
-            width: 80px;
-            height: 80px;
-            border-radius: 50%;
-            margin-bottom: 10px;
-            border: 2px solid #fbbf24;
-        }
-        .sidebar-profile h3 {
-            margin: 0;
-            font-size: 16px;
-            font-weight: 600;
-        }
-        .sidebar-profile p {
-            margin: 0;
-            font-size: 12px;
-            color: #d1d5db;
-        }
-        </style>
-        """,
-        unsafe_allow_html=True
-    )
-    st.sidebar.markdown(
-        f"""<div class="sidebar-profile">
-            <div class="nav-banner"><div class="nav-avatar">👤</div></div>
-            <h3> {user.get("name")} </h3>
-            <p>{user.get("admin_id")}</p>
-        </div>""",
-        unsafe_allow_html=True
-    )
+
     menu_options = [
         "Home", "Books", "Uniforms", "Order Request", "Order History", "Account"
     ]
@@ -190,8 +184,61 @@ def admin_navbar():
         default_index = menu_options.index(st.session_state.current_page)
     except ValueError:
         default_index = 0
-    
+
+    st.markdown(
+        """
+        <style>
+        [data-testid="stSidebar"] {
+            background-color: #1e3a8a !important;  /* full blue background */
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        }
+        .profile-container {
+            text-align: center;
+            padding: 20px 10px;
+            color: white;
+        }
+        .profile-pic {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            margin-bottom: 10px;
+            border: 2px solid white;
+            object-fit: cover;
+        }
+        .logout-container {
+            margin-top: auto;
+            padding: 10px;
+        }
+        /* Style the logout button */
+        .stButton>button {
+            background-color: #1e3a8a;
+            color: white;
+            border-radius: 8px;
+            border: 1px solid white;
+            font-weight: 600;
+            width: 100%;
+        }
+        .stButton>button:hover {
+            background-color: #fbbf24;  /* yellow hover */
+            color: #1e3a8a;
+        }
+        </style>
+        """,
+        unsafe_allow_html=True
+    )
     with st.sidebar:
+        st.markdown(
+            f"""
+            <div class="profile-container">
+                <img src="https://cdn-icons-png.flaticon.com/512/847/847969.png" class="profile-pic">
+                <h4>{user.get("name")}</h4>
+                <p>{user.get("role")}</p>
+            </div>
+            """,
+            unsafe_allow_html=True
+        )
         selected = option_menu(
             menu_title=None,
             options=menu_options,
@@ -204,7 +251,7 @@ def admin_navbar():
                 "container": {
                     "background-color": "#1e3a8a",
                     "padding": "8px 0",
-                    "border-radius": "10px",
+                    "border-radius": "0px",
                 },
                 "icon": {
                     "color": "white",
@@ -216,7 +263,7 @@ def admin_navbar():
                     "text-align": "left",
                     "margin": "0 4px",
                     "padding": "10px 16px",
-                    "border-radius": "8px",
+                    "border-radius": "0px",
                     "font-weight": "500",
                 },
                 "nav-link-selected": {
@@ -224,12 +271,16 @@ def admin_navbar():
                     "color": "#1e3a8a",
                     "font-weight": "700",
                     "box-shadow": "0 4px 8px rgba(251, 191, 36, 0.3)",
+                    "border-radius": "0px"
                 },
             }
         )
         st.sidebar.markdown("---")  # separator line
+        st.markdown('<div class="logout-container">', unsafe_allow_html=True)
         if st.sidebar.button("🚪 Logout", use_container_width=True):
             st.session_state.logged_in = False
             st.session_state.current_page = "Home"
             st.rerun()
+        st.markdown('</div>', unsafe_allow_html=True)
+
     return selected
