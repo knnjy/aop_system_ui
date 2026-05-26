@@ -3,7 +3,7 @@ from services import book_client
 from services.book_client import BookClient
 
 
-def show():
+def add_new():
 
     st.markdown(
         """
@@ -44,10 +44,26 @@ def show():
                 max_value=4,
                 step=1
             )
+            #image upload
+            image_file = st.file_uploader("Upload Book Image", type=["jpg"])
 
             submitted = st.form_submit_button("Add Book")
 
             if submitted:
+                if not subject_code or not title or price <= 0 or stock_quantity <= 0 or not program_related:
+                    st.error("Please fill in all required fields before submitting.")
+                    st.stop()
+                if image_file:
+                    filename_no_ext = image_file.name.split(".")[0]
+                    if filename_no_ext != subject_code:
+                        st.error(f"Image filename must match subject_code ({subject_code})")
+                        st.stop()
+
+                    # Upload image if validation passes
+                    uploaded = book_client.book_upload_image(image_file)
+                    if not uploaded:
+                        st.error("Image upload failed")
+                        st.stop()
 
                 book_data = {
                     "subject_code": subject_code,
@@ -67,7 +83,7 @@ def show():
 
 def show():
     book_client = BookClient()
-
+    add_new()
     # --- CSS Styling ---
     st.markdown("""
         <style>
@@ -228,5 +244,3 @@ def show():
                             st.error("Failed to delete book.")
                     st.markdown("</div>", unsafe_allow_html=True)
 
-if __name__ == "__main__":
-    show()

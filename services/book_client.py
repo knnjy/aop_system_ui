@@ -73,3 +73,19 @@ class BookClient:
             return response.json()
         st.error("Failed to Book Info")
         return None
+    
+    def book_upload_image(self, image_file) -> Optional[str]:
+        """
+        Upload an image to FastAPI static/images.
+        Returns the image URL if successful.
+        """
+        files = {"file": (image_file.name, image_file, image_file.type)}
+        response = self.client.post(
+            "/upload-image/",
+            files=files,
+            headers=self._get_headers()
+        )
+        if response.status_code == 200:
+            return response.json().get("image_url")
+        st.error("Failed to upload image")
+        return None
