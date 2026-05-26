@@ -1,4 +1,4 @@
-from services import uniform_client
+from components.add_uniform import add_uniform_form
 import streamlit as st
 from services.uniform_client import UniformClient
 
@@ -31,8 +31,7 @@ def show():
     st.session_state.setdefault("admin_selected_uniform_id", None)
     st.session_state.setdefault("admin_edit_mode", False)
     st.session_state.setdefault("admin_hidden_uniform_ids", [])
-    st.session_state.setdefault("admin_uniform_action_product", None)
-    st.session_state.setdefault("show_add_form", False) 
+    st.session_state.setdefault("admin_uniform_action_product", None) 
 
     def select_uniform(product_id, edit_mode=False):
         st.session_state["admin_selected_uniform_id"] = product_id
@@ -51,6 +50,7 @@ def show():
         st.session_state["admin_hidden_uniform_ids"] = list(hidden_ids)
         st.success("Product restored to visible list.")
 
+    ## SEARCH BAR & ADD BUTTON
     top_col1, top_col2 = st.columns([4, 1])
     with top_col1:
         search_query = st.text_input(
@@ -61,43 +61,15 @@ def show():
         )
 
     with top_col2:
-        # gumamit ng ibang key para sa button
+        # Only render the button here
         if st.button("➕ Add Uniform", key="add_uniform_btn", use_container_width=True):
-            st.session_state["show_add_form"] = True
+            st.session_state.show_add_form = not st.session_state.get("show_add_form", False)
 
-    # --- Add Uniform Form ---
-        if st.session_state.get("show_add_form", False):
-            with st.form("add_uniform_form"):
-                product_name = st.text_input("Product Name")
-            uniform_type = st.selectbox("Type", ["Male", "Female"])
-            price = st.number_input("Price", min_value=0.0, format="%.2f")
+    # --- New line after the columns ---
+    if st.session_state.get("show_add_form", False):
+        add_uniform_form()
 
-            size_options = ["Small", "Medium", "Large", "XL", "2XL", "3XL"]
-            selected_sizes = st.multiselect("Sizes", size_options)
-
-            stock_per_size = st.number_input(
-                "Initial Stock per Size",
-                min_value=0,
-                max_value=1000,
-                step=1
-            )
-
-            submit_new = st.form_submit_button("Add Uniform")
-            if submit_new:
-                size_data = [{"size": s, "product_stock": stock_per_size} for s in selected_sizes]
-                new_uniform = {
-                    "product_name": product_name,
-                    "uniform_type": uniform_type,
-                    "price": price,
-                    "sizes": size_data
-                }
-                success = uniform_client.add_uniform(new_uniform)
-                if success:
-                    st.success("New uniform added successfully.")
-                    st.session_state["show_add_form"] = False
-                    st.rerun()
-                else:
-                    st.error("Failed to add uniform.")
+    ## UNIFORM LISTING      
     try:
         categories = sorted({u.get("uniform_type", "Other") or "Other" for u in uniforms})
     except Exception:
