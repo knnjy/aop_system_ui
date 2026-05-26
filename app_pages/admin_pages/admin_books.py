@@ -23,12 +23,10 @@ def show():
 
     with st.form("add_book_form"):
 
-        book_id = st.text_input("Book ID")
         subject_code = st.text_input("Subject Code")
         title = st.text_input("Book Title")
-        author = st.text_input("Author")
         price = st.number_input("Price", min_value=0.0)
-        stock = st.number_input("Stock", min_value=0, step=1)
+        stock_quantity = st.number_input("Stock Quantity", min_value=0, step=1)
         program_related = st.text_input("Program Related")
         semester_available = st.number_input(
             "Semester Available",
@@ -42,14 +40,12 @@ def show():
         if submitted:
 
             book_data = {
-                "book_id": book_id,
                 "subject_code": subject_code,
                 "title": title,
-                "author": author,
                 "price": price,
-                "stock": stock,
-                "program_related": program_related,
-                "semester_available": semester_available
+                "stock_quantity": stock_quantity,
+                "semester_available": semester_available,
+                "program_related": program_related
             }
 
             success = book_client.add_book(book_data)
