@@ -177,45 +177,161 @@ def claiming_page():
         c4.write(f"${float(total):.2f}")
         c5.write(user_id)
 
+
 def requests():
-    st.markdown("<h1 style='color:#1e3a8a;'>Order Requests</h1>", unsafe_allow_html=True)
+    st.markdown(
+        "<h1 style='color:#1e3a8a;'>Order Requests</h1>",
+        unsafe_allow_html=True
+    )
+
+    st.markdown("""
+    <style>
+    .request-card {
+        border: 1px solid #1e3a8a;
+        border-radius: 12px;
+        padding: 16px;
+        margin-bottom: 18px;
+        background-color: white;
+        box-shadow: 0 2px 6px rgba(0,0,0,0.05);
+    }
+
+    .request-title {
+        color: #1e3a8a;
+        font-size: 28px;
+        font-weight: bold;
+        margin-bottom: 25px;
+    }
+
+    .table-header {
+        color: #1e3a8a;
+        font-weight: 700;
+        font-size: 16px;
+    }
+
+    .request-id {
+        color: #1e3a8a;
+        font-size: 28px;
+        font-weight: bold;
+        margin-top: 8px;
+    }
+
+    .request-text {
+        color: #374151;
+        font-size: 16px;
+        margin-top: 12px;
+    }
+
+    .request-total {
+        color: #111827;
+        font-size: 18px;
+        font-weight: bold;
+        margin-top: 12px;
+    }
+
+    div.stButton > button {
+        width: 100%;
+        border-radius: 10px;
+        font-weight: 600;
+        height: 45px;
+    }
+    </style>
+    """, unsafe_allow_html=True)
+
+    # GET ORDERS
     orders = order_client.list_orders()
     orders = _normalize_orders(orders)
 
     actionable_statuses = {"pending"}
 
+    # TABLE HEADERS
     header_cols = st.columns([1, 2, 3, 2, 2, 2])
-    headers = ["Order #", "Date", "Items", "Total", "User ID", "Action"]
+
+    headers = [
+        "Order #",
+        "Date",
+        "Items",
+        "Total",
+        "User ID",
+        "Action"
+    ]
+
     for col, text in zip(header_cols, headers):
-        col.markdown(f"<strong style='color:#1e3a8a;'>{text}</strong>", unsafe_allow_html=True)
+        col.markdown(
+            f"<div class='table-header'>{text}</div>",
+            unsafe_allow_html=True
+        )
+
+    st.markdown("<br>", unsafe_allow_html=True)
 
     shown = False
+
+    # DISPLAY ORDERS
     for o in orders:
+
         if not isinstance(o, dict):
             continue
 
         status = (o.get("status") or "").lower()
+
         if status not in actionable_statuses:
             continue
 
         shown = True
+
         request_id = o.get("request_id") or o.get("id") or "N/A"
-        date = o.get("date_created") or o.get("date") or datetime.now().strftime("%Y-%m-%d")
+
+        date = (
+            o.get("date_created")
+            or o.get("date")
+            or datetime.now().strftime("%Y-%m-%d")
+        )
+
         items = o.get("order_item_ids") or o.get("items") or []
-        total = o.get("total_amount") or o.get("total_price") or 0
+
+        total = (
+            o.get("total_amount")
+            or o.get("total_price")
+            or 0
+        )
+
         user_id = o.get("user_id") or "N/A"
 
-        col1, col2, col3, col4, col5, col6 = st.columns([1, 2, 3, 2, 2, 2])
-        col1.write(request_id)
-        col2.write(date)
-        col3.write(_format_items(items))
-        col4.write(f"${float(total):.2f}")
-        col5.write(user_id)
+        # CARD CONTAINER
+        with st.container(border=True):
+            col1, col2, col3, col4, col5, col6 = st.columns(
+                [1, 2, 3, 2, 2, 2]
+            )
+            # ORDER ID
+            col1.markdown(
+                f"""<div class='request-id'>{request_id}</div>""",
+                unsafe_allow_html=True
+            )
+            # DATE
+            col2.markdown(
+                f"""<div class='request-text'> 📅 {date}</div>""",
+                unsafe_allow_html=True
+            )
+            # ITEMS
+            col3.markdown(
+                f"""<div class='request-text'> 📦 {_format_items(items)}</div>
+                """,
+                unsafe_allow_html=True
+            )
+            # TOTAL
+            col4.markdown(
+                f"""<div class='request-total'>💰 ${float(total):,.2f}</div>""",
+                unsafe_allow_html=True
+            )
+            # USER
+            col5.markdown(
+                f"""<div class='request-text'> 👤 {user_id}</div>""",
+                unsafe_allow_html=True
+            )
 
         approve_key = f"approve_{request_id}"
         decline_key = f"decline_{request_id}"
-
-        if col6.button("✅ Approve", key=approve_key):
+        
+        if col6.button("Approve", key=approve_key):
             with st.spinner(f"Approving order {request_id}..."):
                 try:
                     # set to 'to_pay' immediately
@@ -237,7 +353,7 @@ def requests():
                     _safe_rerun()
                     return
 
-        if col6.button("❌ Decline", key=decline_key):
+        if col6.button("Reject", key=decline_key):
             with st.spinner(f"Declining order {request_id}..."):
                 try:
                     resp = order_client.update_order(request_id, {"status": "declined"})
@@ -255,7 +371,7 @@ def requests():
                     flash_set("error", f"Failed to decline order {request_id}.")
                     _safe_rerun()
                     return
-
+    
     if not shown:
         st.info("No pending/actionable orders")
 
@@ -286,12 +402,41 @@ def show():
     if "page" not in st.session_state:
         st.session_state.page = "orders"
 
-    if st.session_state.page == "orders":
-        if st.button("Show Claimed Orders", key="show_claimed_btn"):
-            st.session_state.page = "claimed"
+    st.markdown(
+    """
+    <style>
+    /* Tabs container */
+      /* Each tab button */
+    button[data-testid="stTab"] {
+        flex: 1;                /* equal width for all tabs */
+        text-align: center;     /* center the label */
+        font-weight: 600;
+        padding: 10px;
+        border-radius: 6px;
+    }
+    button[data-testid="stTab"] {
+        flex: 1;                  /* equal width */
+        text-align: center;       /* center text */
+        font-size: 25px;          /* bigger text */
+        font-weight: 700;         /* bold text */
+        letter-spacing: 1px;      /* spacing between letters */
+        color: black;             /* inactive text color */
+        border-radius: 6px;
+        padding: 10px;
+    }
+    /* Active tab */
+    button[data-testid="stTab"][aria-selected="true"] {
+      
+        color: #1e3a8a;              /* text color when active */
+    }
+    </style>
+    """,
+    unsafe_allow_html=True
+)
+    tab1, tab2 = st.tabs(["Requests","Claiming"],)
+    
+    with tab1: 
         requests()
 
-    elif st.session_state.page == "claimed":
-        if st.button("Back to Order Requests", key="back_btn"):
-            st.session_state.page = "orders"
+    with tab2:
         claiming_page()

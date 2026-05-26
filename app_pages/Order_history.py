@@ -62,6 +62,31 @@ def show():
     elif status_filter == "not claimed":
         filtered = [o for o in filtered if o.get("status", "").lower() not in {"claimed", "cancelled"}]
 
+    def _parse_date(date_str):
+        try:
+            return datetime.fromisoformat(str(date_str))
+        except Exception:
+            return datetime.min
+
+    filtered.sort(key=lambda o: _parse_date(o.get("date_created", "")), reverse=True)
+
+    if "order_history_page" not in st.session_state:
+        st.session_state["order_history_page"] = 1
+
+    PAGE_SIZE = 10
+    total_items = len(filtered)
+    total_pages = max(1, (total_items + PAGE_SIZE - 1) // PAGE_SIZE)
+
+    if st.session_state["order_history_page"] > total_pages:
+        st.session_state["order_history_page"] = total_pages
+    if st.session_state["order_history_page"] < 1:
+        st.session_state["order_history_page"] = 1
+
+    current_page = st.session_state["order_history_page"]
+    start_idx = (current_page - 1) * PAGE_SIZE
+    end_idx = start_idx + PAGE_SIZE
+    displayed_orders = filtered[start_idx:end_idx]
+
     st.markdown("<br>", unsafe_allow_html=True)
 
     def get_badge(status):
@@ -73,7 +98,7 @@ def show():
         return ""
 
     rows_html = ""
-    for order in filtered:
+    for order in displayed_orders:
         items = order.get("order_item_ids", [])
         items_html = "<br>".join([f"• {item}" for item in items]) if items else "—"
         rows_html += f"""
@@ -103,6 +128,21 @@ def show():
             {rows_html}
         </div>
     """, unsafe_allow_html=True)
+
+    st.markdown("<br>", unsafe_allow_html=True)
+    prev_col, info_col, next_col = st.columns([1, 2, 1])
+    with prev_col:
+        if st.button("← Previous", key="order_history_prev"):
+            if st.session_state["order_history_page"] > 1:
+                st.session_state["order_history_page"] -= 1
+                st.rerun()
+    with info_col:
+        st.markdown(f"<div style='text-align:center;color:#475569;'>Page {current_page} of {total_pages} — Showing {min(start_idx+1, total_items)} to {min(end_idx, total_items)} of {total_items}</div>", unsafe_allow_html=True)
+    with next_col:
+        if st.button("Next →", key="order_history_next"):
+            if st.session_state["order_history_page"] < total_pages:
+                st.session_state["order_history_page"] += 1
+                st.rerun()
 
     st.markdown("<br><br>", unsafe_allow_html=True)
 
