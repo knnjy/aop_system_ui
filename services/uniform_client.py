@@ -27,9 +27,12 @@ class UniformClient:
         st.error("Failed to fetch uniforms")
         return None
 
-    def add_uniform(self, uniform_data: dict) -> bool:
+    def add_uniform(self, uniform_data: dict) -> Optional[Dict]:
         response = self.client.post("/add-uniform", json=uniform_data, headers=self._get_headers())
-        return response.status_code in (200, 201)
+        if response.status_code in (200, 201):
+            return response.json()
+        st.error("Failed to add uniform")
+        return None
 
     def update_uniform(self, uniform_code: str, update_data: dict) -> bool:
         response = self.client.put(f"/update-uniform/{uniform_code}", json=update_data, headers=self._get_headers())
@@ -52,4 +55,24 @@ class UniformClient:
         if response.status_code == 200:
             return response.json()
         st.error("Failed to filter uniforms")
+        return None
+    
+    def get_stocks(self):
+        response = self.client.get("/get-uniform-stocks", headers=self._get_headers())
+        return response.json()
+    
+    def uniform_upload_image(self, image_file) -> Optional[str]:
+        """
+        Upload an image to FastAPI static/images.
+        Returns the image URL if successful.
+        """
+        files = {"file": (image_file.name, image_file, image_file.type)}
+        response = self.client.post(
+            "/upload-image/",
+            files=files,
+            headers=self._get_headers()
+        )
+        if response.status_code == 200:
+            return response.json().get("image_url")
+        st.error("Failed to upload image")
         return None
