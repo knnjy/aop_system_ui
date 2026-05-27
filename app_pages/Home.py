@@ -1,6 +1,7 @@
 import streamlit as st
 from services.auth_client import AuthClient
 from services.book_client import BookClient
+from services.order_client import OrderClient
 
 
 def _format_price(value):
@@ -16,17 +17,52 @@ def _get_book_key(book: dict):
 
 
 def _is_book_ordered(book: dict) -> bool:
+    # Normalize status safely and check known ordered statuses
+    status = None
+    # try common status fields
+    for key in ("status", "order_status", "order_state", "status_text"):
+        if isinstance(book, dict) and key in book and book.get(key) is not None:
+            status = book.get(key)
+            break
+    # handle nested order.status if present
+    if status is None and isinstance(book.get("order"), dict):
+        status = book["order"].get("status") or book["order"].get("status_text")
+
+    if status is None:
+        status_normalized = None
+    else:
+        try:
+            status_normalized = str(status).strip().lower()
+        except Exception:
+            status_normalized = None
+
+    ordered_statuses = {
+        "ordered", "purchased", "completed",
+        "pending", "to_pay", "to_claim", "claimed"
+    }
+
     ordered_flags = [
         book.get("already_ordered"),
         book.get("is_ordered"),
         book.get("ordered"),
-        book.get("status") in ["ordered", "purchased", "completed"],
+        status_normalized in ordered_statuses,
     ]
+
+    # also consider orders placed in this session (cart -> checkout flow)
+    try:
+        ordered_items = st.session_state.get("ordered_items", [])
+    except Exception:
+        ordered_items = []
+
+    book_key = _get_book_key(book)
+    if book_key and book_key in ordered_items:
+        return True
+
     return any(bool(flag) for flag in ordered_flags)
 
 
 def _is_out_of_stock(book: dict) -> bool:
-    stock = book.get("stock")
+    stock = book.get("stock") or book.get("stock_quantity")
     if stock is None:
         return False
     try:
@@ -175,13 +211,149 @@ def show():
         unsafe_allow_html=True,
     )
 
-
     if "cart_items" not in st.session_state:
         st.session_state["cart_items"] = []
 
     book_client = BookClient()
+    order_client = OrderClient()
+
     # Fetch all books (or narrow by program if your API supports it)
     all_books = book_client.filter_books() or []
+
+    # -------------------------
+    # Build maps for quick lookup
+    # -------------------------
+    book_id_map = {}
+    book_title_map = {}
+    for b in all_books:
+        key = _get_book_key(b)
+        bid = b.get("book_id") or b.get("id")
+        if bid:
+            book_id_map[str(bid)] = key
+        title = b.get("title")
+        if title:
+            book_title_map[str(title).strip().lower()] = key
+
+    # -------------------------
+    # Fetch order history and resolve ordered book keys
+    # -------------------------
+    ordered_book_keys = set()
+    user_id = student_data.get("user_id") or student_data.get("id") or student_data.get("uid")
+
+    try:
+        orders = order_client.list_orders() or []
+    except Exception:
+        orders = []
+
+    if isinstance(orders, dict):
+        orders = orders.get("data") or orders.get("orders") or []
+
+    # For each order that belongs to the current user, collect ordered book keys
+    for order in orders if isinstance(orders, list) else []:
+        if not isinstance(order, dict):
+            continue
+
+        # If order has user_id and it doesn't match current user, skip
+        if user_id and order.get("user_id") and str(order.get("user_id")) != str(user_id):
+            continue
+
+        # Skip cancelled orders entirely
+        status = order.get("status")
+        try:
+            status_norm = str(status).strip().lower() if status is not None else ""
+        except Exception:
+            status_norm = ""
+        if status_norm == "cancelled":
+            continue
+
+        # 1) If order already contains item objects with product/book ids, use them
+        found_items_in_order = False
+        for candidate_list_key in ("order_items", "order_items_detail", "items", "order_items_obj", "order_item_details"):
+            items = order.get(candidate_list_key)
+            if isinstance(items, list) and items:
+                found_items_in_order = True
+                for it in items:
+                    if not isinstance(it, dict):
+                        continue
+                    bid = it.get("book_id") or it.get("product_id") or it.get("product") or it.get("bookId")
+                    if bid:
+                        ordered_book_keys.add(_get_book_key({"book_id": bid}))
+                        continue
+                    if any(k in it for k in ("book_id", "title", "isbn", "id")):
+                        ordered_book_keys.add(_get_book_key(it))
+                # continue to next order after processing this key
+                if found_items_in_order:
+                    break
+
+        if found_items_in_order:
+            continue
+
+        # 2) If order contains order_item_ids (like OB001), try to resolve via order detail endpoint
+        order_item_ids = order.get("order_item_ids") or order.get("order_items") or []
+        if isinstance(order_item_ids, list) and order_item_ids:
+            req_id = order.get("request_id") or order.get("order_id") or order.get("id")
+            detail = {}
+            if req_id and hasattr(order_client, "get_order"):
+                try:
+                    detail = order_client.get_order(req_id) or {}
+                except Exception:
+                    detail = {}
+
+            items = detail.get("order_items") or detail.get("items") or detail.get("order_item_details") or []
+            if isinstance(items, list) and items:
+                for it in items:
+                    if not isinstance(it, dict):
+                        continue
+                    bid = it.get("book_id") or it.get("product_id") or it.get("product")
+                    if bid:
+                        ordered_book_keys.add(_get_book_key({"book_id": bid}))
+                        continue
+                    if any(k in it for k in ("book_id", "title", "isbn", "id")):
+                        ordered_book_keys.add(_get_book_key(it))
+                # resolved via detail, move to next order
+                if ordered_book_keys:
+                    continue
+
+            # 3) Fallback: try to match raw order_item_ids to book ids/titles (if backend used book ids directly)
+            for raw in order_item_ids:
+                try:
+                    raw_s = str(raw).strip()
+                except Exception:
+                    raw_s = None
+                if not raw_s:
+                    continue
+                if raw_s in book_id_map:
+                    ordered_book_keys.add(book_id_map[raw_s])
+                elif raw_s.lower() in book_title_map:
+                    ordered_book_keys.add(book_title_map[raw_s.lower()])
+
+            # 4) Last attempt: try resolving each order_item_id via BookClient if such method exists
+            for oid in order_item_ids:
+                try:
+                    resolved = {}
+                    if hasattr(book_client, "get_order_item"):
+                        resolved = book_client.get_order_item(oid) or {}
+                    elif hasattr(book_client, "fetch_order_item"):
+                        resolved = book_client.fetch_order_item(oid) or {}
+                    elif hasattr(book_client, "order_item_detail"):
+                        resolved = book_client.order_item_detail(oid) or {}
+                    else:
+                        resolved = {}
+                except Exception:
+                    resolved = {}
+
+                if isinstance(resolved, dict) and resolved:
+                    bid = resolved.get("book_id") or resolved.get("product_id")
+                    if bid:
+                        ordered_book_keys.add(_get_book_key({"book_id": bid}))
+                    elif isinstance(resolved.get("book"), dict):
+                        ordered_book_keys.add(_get_book_key(resolved.get("book")))
+                    elif resolved.get("title"):
+                        ordered_book_keys.add(_get_book_key({"title": resolved.get("title")}))
+
+    # -------------------------
+    # End order-history cross-reference
+    # -------------------------
 
     # Filter only those books whose subject_code matches enrolled subjects
     if enrolled_subjects:
@@ -189,7 +361,7 @@ def show():
     else:
         books = []
 
-    required_books = [book for book in books if not _is_book_ordered(book)]
+    required_books = [book for book in books if not (_is_book_ordered(book) or (_get_book_key(book) in ordered_book_keys))]
     total_required_count = len(required_books)
     total_required_price = sum(float(book.get("price", 0) or 0) for book in required_books)
 
@@ -208,12 +380,14 @@ def show():
 
         if books:
             for book in books:
+                # st.write(book)  # Uncomment to inspect the book dict structure during debugging
                 book_id = _get_book_key(book)
                 title = book.get("title", "Untitled")
                 price_text = _format_price(book.get("price", 0))
-                already_ordered = _is_book_ordered(book)
+                # Determine already ordered by either book-level flags/status or cross-referenced order history
+                already_ordered = _is_book_ordered(book) or (book_id in ordered_book_keys)
                 out_of_stock = _is_out_of_stock(book)
-                in_cart = any(item["id"] == book_id for item in st.session_state["cart_items"])
+                in_cart = _in_cart(book, st.session_state["cart_items"])
 
                 status_text = None
                 status_class = "status-pill"
@@ -233,9 +407,10 @@ def show():
                     st.markdown(f"<div class='{status_class}'>{status_text}</div>", unsafe_allow_html=True)
                 else:
                     if st.button("Add to Cart", key=f"add_{book_id}"):
-                        if not in_cart:
+                        # re-check in_cart to avoid duplicates on rapid clicks
+                        if not _in_cart(book, st.session_state.setdefault("cart_items", [])):
                             st.session_state.setdefault("cart_items", []).append({
-                                "id": book.get('book_id'),
+                                "id": _get_book_key(book),
                                 "product_id": book.get('book_id'),
                                 "unit_price": float(book.get('price', 0) or 0),
                                 "quantity": 1,
@@ -260,7 +435,7 @@ def show():
 
         cart_items = st.session_state["cart_items"]
         cart_count = len(cart_items)
-        cart_total = sum(float(item.get("price", 0) or 0) * item.get("quantity", 1) for item in cart_items)
+        cart_total = sum(float(item.get("unit_price", 0) or 0) * item.get("quantity", 1) for item in cart_items)
 
         st.markdown(f"<div class='summary-row'><strong>Required books:</strong><span>{total_required_count}</span></div>", unsafe_allow_html=True)
         st.markdown(f"<div class='summary-row'><strong>Required total:</strong><span>{_format_price(total_required_price)}</span></div>", unsafe_allow_html=True)
@@ -306,13 +481,3 @@ def show():
         """,
         unsafe_allow_html=True,
     )
-
-
-
-
-
-
-
-
-
-    

@@ -291,7 +291,7 @@ def requests():
             )
             # TOTAL
             col4.markdown(
-                f"""<div class='request-total'>💰 ${float(total):,.2f}</div>""",
+                f"""<div class='request-total'>₱{float(total):,.2f}</div>""",
                 unsafe_allow_html=True
             )
             # USER

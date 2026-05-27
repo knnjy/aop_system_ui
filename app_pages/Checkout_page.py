@@ -56,6 +56,19 @@ def show():
                     # Check if successful (200 status or result is truthy)
                     if result is not None:
                         st.success("Order placed successfully!")
+                        # record ordered item keys in session so Home can reflect "Already ordered"
+                        try:
+                            ordered = st.session_state.setdefault("ordered_items", [])
+                        except Exception:
+                            st.session_state["ordered_items"] = []
+                            ordered = st.session_state["ordered_items"]
+
+                        # cart items should contain canonical 'id' from the Home page
+                        for item in cart:
+                            item_key = item.get("id") or str(item.get("product_id"))
+                            if item_key and item_key not in ordered:
+                                ordered.append(item_key)
+
                         st.session_state.cart_items = []
                         st.session_state.current_page = 'Order Status'
                         st.rerun()
