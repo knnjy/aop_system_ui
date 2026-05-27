@@ -104,10 +104,10 @@ def show():
     top_col1, top_col2 = st.columns([4, 1])
     with top_col1:
         search_query = st.text_input(
-            "Search uniforms...",
+            "Search books...",
             key="admin_uniform_search",
             label_visibility="collapsed",
-            placeholder="Search uniforms..."
+            placeholder="Search Books..."
         )
 
     with top_col2:
@@ -165,23 +165,6 @@ def show():
                 </div>
             """, unsafe_allow_html=True)
 
-            # Horizontal controls
-            col1, col2 = st.columns([1,2], gap="medium")
-            with col1:
-                qty = st.number_input("Quantity", min_value=1, max_value=10, value=1, step=1,
-                                      key=f"detail_qty_{book.get('book_id','0')}")
-            with col2:
-                if st.button("🛒 Add to Cart", key=f"cart_{book.get('book_id','0')}"):
-                    st.session_state.setdefault("cart_items", []).append({
-                        "id": book.get('book_id'),
-                        "product_id": book.get('book_id'),
-                        "unit_price": float(book.get('price', 0) or 0),
-                        "quantity": 1,
-                        "subtotal": float(book.get('price', 0) or 0),
-                        "title": book.get('title'),
-                        "info": book.get('program_related')
-                    })
-                    st.success(f"Added {book.get('title','Unknown')} to cart!")
         return
     # --- LIST VIEW ---
     if st.session_state.get("update_success"):

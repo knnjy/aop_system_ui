@@ -213,7 +213,7 @@ def show():
                 price_text = _format_price(book.get("price", 0))
                 already_ordered = _is_book_ordered(book)
                 out_of_stock = _is_out_of_stock(book)
-                in_cart = any(item["book_id"] == book_id for item in st.session_state["cart_items"])
+                in_cart = any(item["id"] == book_id for item in st.session_state["cart_items"])
 
                 status_text = None
                 status_class = "status-pill"
@@ -234,14 +234,16 @@ def show():
                 else:
                     if st.button("Add to Cart", key=f"add_{book_id}"):
                         if not in_cart:
-                            st.session_state["cart_items"].append({
-                                "id": book_id,
-                                "title": title,
-                                "info": book.get("subject_code", ""),
-                                "price": float(book.get("price", 0)),
-                                "quantity": 1
+                            st.session_state.setdefault("cart_items", []).append({
+                                "id": book.get('book_id'),
+                                "product_id": book.get('book_id'),
+                                "unit_price": float(book.get('price', 0) or 0),
+                                "quantity": 1,
+                                "subtotal": float(book.get('price', 0) or 0),
+                                "title": book.get('title'),
+                                "info": book.get('program_related')
                             })
-                        st.success(f"Added {title} to cart")
+                            st.success(f"Added {book.get('title','Unknown')} to cart!")
 
                 st.markdown("</div>", unsafe_allow_html=True)
         else:
