@@ -439,8 +439,6 @@ def show():
 
         st.markdown(f"<div class='summary-row'><strong>Required books:</strong><span>{total_required_count}</span></div>", unsafe_allow_html=True)
         st.markdown(f"<div class='summary-row'><strong>Required total:</strong><span>{_format_price(total_required_price)}</span></div>", unsafe_allow_html=True)
-        st.markdown(f"<div class='summary-row'><strong>Selected books:</strong><span>{cart_count}</span></div>", unsafe_allow_html=True)
-        st.markdown(f"<div class='summary-row'><strong>Cart subtotal:</strong><span>{_format_price(cart_total)}</span></div>", unsafe_allow_html=True)
 
         if cart_count == 0:
             st.info("Your cart is empty. Add required books from the left panel.")
