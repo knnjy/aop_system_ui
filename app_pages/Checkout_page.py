@@ -71,6 +71,7 @@ def show():
 
                         st.session_state.cart_items = []
                         st.session_state.current_page = 'Order Status'
+                        st.toast("Checkout Success! Go to order status to track your order.")
                         st.rerun()
                     else:
                         st.error("Failed to place order. Please try again.")
