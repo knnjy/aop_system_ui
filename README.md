@@ -1,9 +1,6 @@
 # aop_system_ui
 A Streamlit‑based frontend for the Automated Academic Essentials Service.
 
-# aop_system_ui
-A Streamlit‑based frontend for the Automated Academic Essentials Service.
-
 This UI communicates with the FastAPI backend using **httpx** and **requests**, and provides **role-based navigation** for **Users** and **Admins**.
 
 ---
