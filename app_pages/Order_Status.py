@@ -30,7 +30,7 @@ def safe_rerun():
     except Exception:
         pass
     try:
-        st.experimental_set_query_params(_refresh=str(uuid.uuid4()))
+        st.query_params(_refresh=str(uuid.uuid4()))
         return
     except Exception:
         pass
