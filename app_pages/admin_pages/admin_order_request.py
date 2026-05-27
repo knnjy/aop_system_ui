@@ -69,7 +69,7 @@ def flash_show():
 # ---------- Pages ----------
 def claiming_page():
     """Claiming page: show 'Mark as Claimed' (to_claim orders) above claimed orders."""
-    st.markdown("<h1 style='color:#1e3a8a;'>Claiming</h1>", unsafe_allow_html=True)
+    st.markdown("<h1 style='color:#1e3a8a;'>CLAIMING</h1>", unsafe_allow_html=True)
 
     orders = order_client.list_orders()
     orders = _normalize_orders(orders)
@@ -77,7 +77,6 @@ def claiming_page():
     # ---------- to_claim section ----------
     to_claim_orders = [o for o in orders if (o.get("status") or "").lower() == "to_claim"]
 
-    st.markdown("<h2 style='color:#1e3a8a;'>Mark as Claimed</h2>", unsafe_allow_html=True)
     if not to_claim_orders:
         st.info("No orders waiting to be marked as claimed")
     else:
@@ -120,39 +119,11 @@ def claiming_page():
                         _safe_rerun()
                         return
 
-    st.markdown("---")
-
-    # ---------- claimed section ----------
-    st.markdown("<h2 style='color:#1e3a8a;'>Claimed Orders</h2>", unsafe_allow_html=True)
-    claimed_orders = [o for o in orders if (o.get("status") or "").lower() in ("claimed", "received")]
-
-    if not claimed_orders:
-        st.info("No claimed orders yet")
-        return
-
-    header_cols = st.columns([1, 2, 3, 2, 2])
-    headers = ["Order #", "Date", "Items", "Total", "User ID"]
-    for col, text in zip(header_cols, headers):
-        col.markdown(f"<strong style='color:#1e3a8a;'>{text}</strong>", unsafe_allow_html=True)
-
-    for o in claimed_orders:
-        request_id = o.get("request_id") or o.get("id") or "N/A"
-        date = o.get("date_created") or o.get("date") or datetime.now().strftime("%Y-%m-%d")
-        items = o.get("order_item_ids") or o.get("items") or []
-        total = o.get("total_amount") or o.get("total_price") or 0
-        user_id = o.get("user_id") or "N/A"
-
-        c1, c2, c3, c4, c5 = st.columns([1, 2, 3, 2, 2])
-        c1.write(request_id)
-        c2.write(date)
-        c3.write(_format_items(items))
-        c4.write(f"${float(total):.2f}")
-        c5.write(user_id)
 
 
 def requests():
     st.markdown(
-        "<h1 style='color:#1e3a8a;'>Order Requests</h1>",
+        "<h1 style='color:#1e3a8a;'>ORDER REQUEST</h1>",
         unsafe_allow_html=True
     )
 
@@ -360,6 +331,7 @@ def requests():
 def show():
     # render flash at top if present
     flash_show()
+    st.button("Refresh", on_click=_safe_rerun)
 
     st.markdown(
         """

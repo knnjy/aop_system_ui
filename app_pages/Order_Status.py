@@ -116,21 +116,41 @@ def show(debug: bool = False):
         elif debug:
             st.write(f"skipping order {o.get('request_id')} (user_id={o.get('user_id')})")
 
+    # If there are no orders for this account at all, show message
     if not user_orders:
-        st.info("You have no active orders.")
+        st.info("You have no active orders")
         st.stop()
 
-    # display each order
+    # NEW: determine which of the user_orders will actually be displayed
+    # (i.e., those that have a canonical status in allowed_display and are not hidden)
+    displayable_orders = []
     for order in user_orders:
         raw_status = str(order.get("status", "unknown")).strip().lower()
         mapped_status = status_map.get(raw_status, raw_status.replace(" ", "_"))
-        status = mapped_status
-
-        # Only display pending, to_pay, to_claim
-        if status not in allowed_display:
+        # Skip orders that won't be displayed due to status
+        if mapped_status not in allowed_display:
             if debug:
-                st.write(f"Not displaying {order.get('request_id')} because status={status}")
+                st.write(f"Not displayable (status) {order.get('request_id')} -> {mapped_status}")
             continue
+        # Skip orders hidden by session flag
+        hidden_key = f"hidden_{order.get('request_id')}"
+        if st.session_state.get(hidden_key):
+            if debug:
+                st.write(f"Not displayable (hidden) {order.get('request_id')}")
+            continue
+        # If we reach here, this order will be shown
+        displayable_orders.append(order)
+
+    # If nothing will be shown in the order list, show the "no active orders" message
+    if not displayable_orders:
+        st.info("You have no active orders")
+        st.stop()
+
+    # display each order (only iterate displayable_orders now)
+    for order in displayable_orders:
+        raw_status = str(order.get("status", "unknown")).strip().lower()
+        mapped_status = status_map.get(raw_status, raw_status.replace(" ", "_"))
+        status = mapped_status
 
         # Skip if user previously confirmed cancellation (persisted in session_state)
         hidden_key = f"hidden_{order.get('request_id')}"
