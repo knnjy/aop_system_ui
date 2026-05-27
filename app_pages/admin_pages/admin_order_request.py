@@ -24,34 +24,6 @@ def _safe_rerun():
     except Exception:
         st.session_state["_refresh"] = not st.session_state.get("_refresh", False)
 
-def _schedule_to_claim_then_claim(request_id: str, delay_to_claim: int = 30, delay_to_claimed: int = 30):
-    """Schedule a background chain:
-    1) after delay_to_claim seconds set status -> 'to_claim'
-    2) after delay_to_claimed seconds from that point set status -> 'claimed'
-    This runs in background threads and must not touch Streamlit objects.
-    """
-    def _job_to_claim():
-        try:
-            order_client.update_order(request_id, {"status": "to_claim"})
-        except Exception:
-            traceback.print_exc()
-            return
-
-        # schedule final transition to 'claimed'
-        def _job_to_claimed():
-            try:
-                order_client.update_order(request_id, {"status": "claimed"})
-            except Exception:
-                traceback.print_exc()
-
-        t2 = threading.Timer(delay_to_claimed, _job_to_claimed)
-        t2.daemon = True
-        t2.start()
-
-    t1 = threading.Timer(delay_to_claim, _job_to_claim)
-    t1.daemon = True
-    t1.start()
-
 def _normalize_orders(orders):
     """Return a list of order dicts regardless of backend shape."""
     if orders is None:
@@ -129,7 +101,7 @@ def claiming_page():
             c5.write(user_id)
 
             mark_key = f"mark_claimed_{request_id}"
-            if c6.button("Mark Claimed", key=mark_key):
+            if c6.button("Marked as Claimed", key=mark_key):
                 with st.spinner(f"Marking {request_id} as claimed..."):
                     try:
                         resp = order_client.update_order(request_id, {"status": "claimed"})
@@ -343,9 +315,19 @@ def requests():
                     return
 
                 if resp:
-                    # wait 30s in 'to_pay', then set to 'to_claim', then after another 30s set to 'claimed'
-                    _schedule_to_claim_then_claim(request_id, delay_to_claim=30, delay_to_claimed=30)
-                    flash_set("success", f"Order {request_id} set to 'to_pay'. It will move to 'to_claim' after 30s and to 'claimed' 30s after that.", details=resp)
+                    # keep in 'to_pay' for 30s, then set to 'to_claim'
+                    def _job_to_claim():
+                        try:
+                            order_client.update_order(request_id, {"status": "to_claim"})
+                        except Exception:
+                            traceback.print_exc()
+                            return
+
+                    t1 = threading.Timer(30, _job_to_claim)
+                    t1.daemon = True
+                    t1.start()
+
+                    flash_set("success", f"Order {request_id} set to 'to_pay'. It will move to 'to_claim' after 30s.", details=resp)
                     _safe_rerun()
                     return
                 else:
