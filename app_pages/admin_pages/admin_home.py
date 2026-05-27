@@ -12,15 +12,15 @@ def show():
     uniform_service = UniformClient()
     
     uniform_stock = uniform_service.get_stocks()
-    data = book_service.get_book_stock()
+    book_stock = book_service.get_book_stock()
 
     orders = order_service.list_orders()
     current_requests = len([o for o in orders if o["status"] == "pending"])
 
     to_claim_count = len([o for o in orders if o["status"] == "to_claim"])
     success_order = len([o for o in orders if o["status"] == "claimed"])
+    
     st.title("Dashboard")
-
     col1, col2, col3 = st.columns(3)
 
     # Green card for Current Requests
@@ -59,19 +59,86 @@ def show():
             unsafe_allow_html=True
         )
 
+    df = pd.DataFrame(orders)
+
+    # Filter only claimed orders
+    sales_df = df[df["status"] == "claimed"].copy()
+
+    # Convert date_created to datetime
+    sales_df["date_created"] = pd.to_datetime(sales_df["date_created"])
+
+    # --- Aggregations ---
+    # Daily sales
+    daily_sales = sales_df.groupby(sales_df["date_created"].dt.date)["total_amount"].sum().reset_index()
+    daily_sales.rename(columns={"date_created":"Day"}, inplace=True)
+
+    # Weekly sales
+    weekly_sales = sales_df.groupby(sales_df["date_created"].dt.to_period("W"))["total_amount"].sum().reset_index()
+    weekly_sales["Week"] = weekly_sales["date_created"].astype(str)
+
+    # Monthly sales
+    monthly_sales = sales_df.groupby(sales_df["date_created"].dt.to_period("M"))["total_amount"].sum().reset_index()
+    monthly_sales["Month"] = monthly_sales["date_created"].astype(str)
+
+    # --- Streamlit UI ---
+    st.subheader("📊 Sales Dashboard")
+
+    tab1, tab2, tab3 = st.tabs(["Daily", "Weekly", "Monthly"])
+
+    with tab1:
+        st.subheader("Daily Claimed Sales")
+        col1, col2 = st.columns([1,1])
+        with col1:
+            st.bar_chart(daily_sales.set_index("Day"))
+        with col2:
+            st.line_chart(daily_sales.set_index("Day"))
+
+    with tab2:
+        st.subheader("Weekly Claimed Sales")
+        col1, col2 = st.columns([1,1])
+        with col1:
+            st.bar_chart(weekly_sales.set_index("Week"))
+        with col2:
+            st.line_chart(weekly_sales.set_index("Week"))
+
+    with tab3:
+        st.subheader("Monthly Claimed Sales")
+        col1, col2 = st.columns([1,1])
+        with col1:
+            st.bar_chart(monthly_sales.set_index("Month"))
+        with col2:
+            st.line_chart(monthly_sales.set_index("Month"))
+
+    
+    ## BOOK STOCK
+    df = pd.DataFrame(list(book_stock.items()), columns=["Book Code", "Stock"])
+    df["Stock"] = df["Stock"].astype(int)
+
+    # Add notifier column
+    # Convert to DataFrame
+    df = pd.DataFrame(list(book_stock.items()), columns=["Book Code", "Stock"])
+    df["Stock"] = df["Stock"].astype(int)
+
+    # Add notifier column
+    def stock_notifier(stock):
+        if stock == 0:
+            return "❌ Out of Stock"
+        elif stock < 10:
+            return "⚠️ Low"
+        else:
+            return "✅ OK"
+
+    df["Notifier"] = df["Stock"].apply(stock_notifier)
+
+    st.subheader("📊 Book Dashboard")
     col1, col2 = st.columns(2)
+    # Horizontal bar chart
     with col1:
-        df = pd.DataFrame(list(data.items()), columns=["Book Code", "Stock"])
-        df["Stock"] = df["Stock"].astype(int)
-
-        st.title("📊 Book Dashboard")
-
-        # Horizontal bar chart
         st.subheader("Book Stock")
         st.bar_chart(df.set_index("Book Code")["Stock"])
     with col2:
-        # Simple table without matplotlib
-        st.subheader("Detailed Table")
+        # Detailed table with notifier
+        st.subheader("Book Table Stock")
         st.dataframe(df)
 
     col1, col2 = st.columns(2)
@@ -105,5 +172,3 @@ def show():
 
     st.altair_chart(chart, use_container_width=True)
 
-    st.write("Sales")
-    
