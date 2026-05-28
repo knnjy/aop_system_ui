@@ -21,8 +21,8 @@ This UI communicates with the FastAPI backend using **httpx** and **requests**, 
 
 1. Clone the repo
 ```bash
-git clone https://github.com/your-org/catalog-frontend.git
-cd catalog-frontend
+git clone https://github.com/knnjy/aop_system_ui.git
+cd aop_system_ui
 ```
 2. Create Virtual Environment (Optional but Recommended)
 ```bash 
@@ -38,5 +38,11 @@ pip install -r requirements.txt
 ```bash
 streamlit run app.py
 ```
- 
+## ACCOUNT
+User:
+1. Username: 2024-200082	Password: MyStrongPwd#2026
+2. Username: 2024-200076	Password: SecurePass!2025
 
+Admin:
+1. Username: 2024-200409	Password: Test1234#
+2. Username: 2023-102745	Password: Test1234#
